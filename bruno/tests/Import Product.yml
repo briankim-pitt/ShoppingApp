@@ -17,7 +17,7 @@ http:
     type: json
     data: |-
       {
-        "url": "https://wooting.io/wooting-60he"
+        "url": ""
       }
   auth: inherit
 
