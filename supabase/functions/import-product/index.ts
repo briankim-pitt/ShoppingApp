@@ -258,8 +258,8 @@ export default {
     const userClaims = typeof ctx === "object" && ctx !== null && "userClaims" in ctx
       ? Reflect.get(ctx, "userClaims")
       : null;
-    const rawUserId = typeof userClaims === "object" && userClaims !== null && "sub" in userClaims
-      ? Reflect.get(userClaims, "sub")
+    const rawUserId = typeof userClaims === "object" && userClaims !== null && "id" in userClaims
+      ? Reflect.get(userClaims, "id")
       : null;
     const userId = typeof rawUserId === "string" && rawUserId.length > 0 ? rawUserId : null;
     if (!userId) {

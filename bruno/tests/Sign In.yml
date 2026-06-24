@@ -1,0 +1,44 @@
+info:
+  name: Sign In
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{base_url}}/auth/v1/token?grant_type=password"
+  headers:
+    - name: apiKey
+      value: "{{anon_key}}"
+    - name: Content-Type
+      value: application/json
+  params:
+    - name: grant_type
+      value: password
+      type: query
+  body:
+    type: json
+    data: |-
+      {
+        "email": "{{email}}",
+        "password": "{{password}}"
+      }
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const data = res.getBody();
+
+        if (!data.access_token) {
+          throw new Error("Sign-in response did not contain an access token");
+        }
+
+        bru.setVar("access_token", data.access_token);
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: This request retrieves a list of users from the JSONPlaceholder API.

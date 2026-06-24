@@ -1,0 +1,28 @@
+info:
+  name: Import Product
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{base_url}}/functions/v1/import-product"
+  headers:
+    - name: apiKey
+      value: "{{anon_key}}"
+    - name: Content-Type
+      value: application/json
+    - name: Authorization
+      value: Bearer {{access_token}}
+  body:
+    type: json
+    data: |-
+      {
+        "url": "https://wooting.io/wooting-60he"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
