@@ -138,6 +138,21 @@ function textFromSelector($: cheerio.CheerioAPI, selector: string, attr?: string
   return rawValue?.trim() || null;
 }
 
+function valueFromSelector($: cheerio.CheerioAPI, selector: string) {
+  const node = $(selector).first();
+  if (!node.length) {
+    return null;
+  }
+
+  return firstNonEmpty(
+    node.attr("content"),
+    node.attr("value"),
+    node.attr("data-price"),
+    node.attr("data-product-price"),
+    node.text(),
+  );
+}
+
 function normalizeCurrencyCode(value: string | null) {
   if (!value) {
     return null;
@@ -152,17 +167,149 @@ function parsePrice(value: string | null) {
     return null;
   }
 
-  const normalized = value.replace(/[^0-9.,-]/g, "").replace(/,/g, "");
-  if (!normalized) {
+  let normalized = value
+    .replace(/[\s\u00a0\u202f']/g, "")
+    .replace(/[^0-9.,-]/g, "");
+  if (!normalized || normalized.startsWith("-")) {
     return null;
   }
 
+  const lastComma = normalized.lastIndexOf(",");
+  const lastDot = normalized.lastIndexOf(".");
+  if (lastComma >= 0 && lastDot >= 0) {
+    const decimalSeparator = lastComma > lastDot ? "," : ".";
+    const thousandsSeparator = decimalSeparator === "," ? "." : ",";
+    normalized = normalized.replaceAll(thousandsSeparator, "");
+    normalized = normalized.replace(decimalSeparator, ".");
+  } else if (lastComma >= 0) {
+    const digitsAfterComma = normalized.length - lastComma - 1;
+    normalized = digitsAfterComma > 0 && digitsAfterComma <= 2
+      ? normalized.replace(",", ".")
+      : normalized.replaceAll(",", "");
+  } else if (lastDot >= 0) {
+    const digitsAfterDot = normalized.length - lastDot - 1;
+    if (digitsAfterDot === 3 && normalized.indexOf(".") === lastDot) {
+      normalized = normalized.replace(".", "");
+    }
+  }
+
   const amount = Number(normalized);
-  return Number.isFinite(amount) ? amount : null;
+  return Number.isFinite(amount) && amount >= 0 ? amount : null;
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : null;
+}
+
+function stringValue(value: unknown) {
+  if (typeof value === "string" || typeof value === "number") {
+    return String(value);
+  }
+
+  return null;
+}
+
+function hasJsonLdType(value: unknown, expected: string) {
+  const types = Array.isArray(value) ? value : [value];
+  return types.some((type) =>
+    typeof type === "string" && type.toLowerCase() === expected.toLowerCase()
+  );
+}
+
+function collectJsonLdObjects(value: unknown, objects: Record<string, unknown>[] = []) {
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      collectJsonLdObjects(item, objects);
+    }
+    return objects;
+  }
+
+  const record = asRecord(value);
+  if (!record) {
+    return objects;
+  }
+
+  objects.push(record);
+  if ("@graph" in record) {
+    collectJsonLdObjects(record["@graph"], objects);
+  }
+
+  return objects;
+}
+
+function extractJsonLdOffer($: cheerio.CheerioAPI) {
+  const objects: Record<string, unknown>[] = [];
+
+  $('script[type="application/ld+json"]').each((_, element) => {
+    const raw = $(element).text().trim();
+    if (!raw) {
+      return;
+    }
+
+    try {
+      collectJsonLdObjects(JSON.parse(raw), objects);
+    } catch {
+      // Invalid JSON-LD should not prevent the remaining metadata fallbacks.
+    }
+  });
+
+  const products = objects.filter((object) => hasJsonLdType(object["@type"], "Product"));
+  for (const product of products) {
+    const offers = Array.isArray(product.offers) ? product.offers : [product.offers];
+    for (const rawOffer of offers) {
+      const offer = asRecord(rawOffer);
+      if (!offer) {
+        continue;
+      }
+
+      const priceSpecification = asRecord(offer.priceSpecification);
+      const price = firstNonEmpty(
+        stringValue(offer.price),
+        stringValue(offer.lowPrice),
+        stringValue(priceSpecification?.price),
+      );
+      const currency = firstNonEmpty(
+        stringValue(offer.priceCurrency),
+        stringValue(priceSpecification?.priceCurrency),
+      );
+      if (price) {
+        return { price, currency };
+      }
+    }
+  }
+
+  return { price: null, currency: null };
+}
+
+function inferCurrencyCode(rawPrice: string | null, sourceUrl: string) {
+  if (!rawPrice) {
+    return null;
+  }
+
+  if (rawPrice.includes("€")) return "EUR";
+  if (rawPrice.includes("£")) return "GBP";
+  if (rawPrice.includes("₩")) return "KRW";
+  if (rawPrice.includes("₹")) return "INR";
+  if (rawPrice.includes("¥") || rawPrice.includes("￥")) return "JPY";
+  if (/\bCA?\$/i.test(rawPrice)) return "CAD";
+  if (/\bAU?\$/i.test(rawPrice)) return "AUD";
+  if (rawPrice.includes("$")) {
+    const hostname = new URL(sourceUrl).hostname.toLowerCase();
+    if (hostname.endsWith(".ca")) return "CAD";
+    if (hostname.endsWith(".com.au") || hostname.endsWith(".au")) return "AUD";
+    if (hostname.endsWith(".co.nz") || hostname.endsWith(".nz")) return "NZD";
+    if (hostname.endsWith(".com.sg") || hostname.endsWith(".sg")) return "SGD";
+    return "USD";
+  }
+
+  return null;
 }
 
 function extractMetadata(html: string, sourceUrl: string) {
   const $ = cheerio.load(html);
+  const jsonLdOffer = extractJsonLdOffer($);
 
   const canonicalHref = firstNonEmpty(
     textFromSelector($, 'link[rel="canonical"]', "href"),
@@ -189,15 +336,23 @@ function extractMetadata(html: string, sourceUrl: string) {
     textFromSelector($, 'meta[property="og:image"]', "content"),
     textFromSelector($, 'meta[name="twitter:image"]', "content"),
   );
-  const currencyCode = normalizeCurrencyCode(firstNonEmpty(
-    textFromSelector($, 'meta[property="product:price:currency"]', "content"),
-    textFromSelector($, 'meta[itemprop="priceCurrency"]', "content"),
-  ));
-  const priceAmount = parsePrice(firstNonEmpty(
+  const rawPrice = firstNonEmpty(
+    jsonLdOffer.price,
     textFromSelector($, 'meta[property="product:price:amount"]', "content"),
-    textFromSelector($, 'meta[itemprop="price"]', "content"),
-    textFromSelector($, '[data-testid="price"]'),
+    textFromSelector($, 'meta[property="og:price:amount"]', "content"),
+    valueFromSelector($, '[itemprop="price"]'),
+    valueFromSelector($, "[data-product-price]"),
+    valueFromSelector($, "[data-price]"),
+    valueFromSelector($, '[data-testid*="price" i]'),
+  );
+  const currencyCode = normalizeCurrencyCode(firstNonEmpty(
+    jsonLdOffer.currency,
+    textFromSelector($, 'meta[property="product:price:currency"]', "content"),
+    textFromSelector($, 'meta[property="og:price:currency"]', "content"),
+    valueFromSelector($, '[itemprop="priceCurrency"]'),
+    inferCurrencyCode(rawPrice, sourceUrl),
   ));
+  const priceAmount = parsePrice(rawPrice);
 
   return {
     canonicalUrl,
