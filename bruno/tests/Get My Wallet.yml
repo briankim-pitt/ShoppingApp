@@ -1,0 +1,27 @@
+info:
+  name: Get My Wallet
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: "{{base_url}}/rest/v1/rpc/get_my_wallet"
+  headers:
+    - name: apikey
+      value: "{{anon_key}}"
+    - name: Authorization
+      value: Bearer {{access_token}}
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: "{}"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Returns the signed-in user's private virtual balance and home-currency selection state.

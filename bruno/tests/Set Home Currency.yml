@@ -1,0 +1,30 @@
+info:
+  name: Set Home Currency
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: "{{base_url}}/functions/v1/set-home-currency"
+  headers:
+    - name: apikey
+      value: "{{anon_key}}"
+    - name: Authorization
+      value: Bearer {{access_token}}
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "currency_code": "USD"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Sets or corrects the signed-in user's home currency. It becomes locked after the first virtual purchase.

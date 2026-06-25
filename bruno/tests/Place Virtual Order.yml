@@ -1,0 +1,34 @@
+info:
+  name: Place Virtual Order
+  type: http
+  seq: 6
+
+http:
+  method: POST
+  url: "{{base_url}}/functions/v1/place-virtual-order"
+  headers:
+    - name: apikey
+      value: "{{anon_key}}"
+    - name: Authorization
+      value: Bearer {{access_token}}
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "product_id": "231525f8-2c65-4b6f-baf3-ddaa68958549",
+        "quantity": 1,
+        "idempotency_key": "7da29f4f-5c2b-4e12-aac4-ad94692fd9fb",
+        "manual_price_amount": 179.99,
+        "manual_currency_code": "USD"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Send the same idempotency key twice to verify replay protection. Use a new UUID for a new checkout. Manual price and currency are only used when the product has no imported values.

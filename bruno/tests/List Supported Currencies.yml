@@ -1,0 +1,19 @@
+info:
+  name: List Supported Currencies
+  type: http
+  seq: 3
+
+http:
+  method: GET
+  url: "{{base_url}}/rest/v1/supported_currencies?select=currency_code,display_name,symbol,minor_unit&order=sort_order"
+  headers:
+    - name: apikey
+      value: "{{anon_key}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Returns the active currencies for the onboarding currency picker.
