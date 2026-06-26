@@ -4,6 +4,9 @@ This structure is designed for a SwiftUI app backed by Supabase. It is
 feature-oriented: files that change together stay together, while shared
 infrastructure remains small and explicit.
 
+The app targets iOS 26.0 or later and uses the Swift 6 language mode with
+strict concurrency checking.
+
 `ShoppingApp` is a temporary internal name. The Xcode project, target, and
 display name can be renamed later.
 
