@@ -1,8 +1,23 @@
 import SwiftUI
+import UIKit
 
 @main
 struct ShoppingApp: App {
     @State private var appModel = AppModel.live()
+
+    init() {
+        let appearance = UINavigationBarAppearance()
+        appearance.largeTitleTextAttributes = [
+            .font: Self.roundedSystemFont(size: 34, weight: .bold)
+        ]
+        appearance.titleTextAttributes = [
+            .font: Self.roundedSystemFont(size: 17, weight: .semibold)
+        ]
+
+        UINavigationBar.appearance().standardAppearance = appearance
+        UINavigationBar.appearance().scrollEdgeAppearance = appearance
+        UINavigationBar.appearance().compactAppearance = appearance
+    }
 
     var body: some Scene {
         WindowGroup {
@@ -10,7 +25,16 @@ struct ShoppingApp: App {
                 .environment(appModel)
                 .task {
                     await appModel.start()
-                }
+            }
         }
+    }
+
+    private static func roundedSystemFont(size: CGFloat, weight: UIFont.Weight) -> UIFont {
+        let font = UIFont.systemFont(ofSize: size, weight: weight)
+        guard let descriptor = font.fontDescriptor.withDesign(.rounded) else {
+            return font
+        }
+
+        return UIFont(descriptor: descriptor, size: size)
     }
 }

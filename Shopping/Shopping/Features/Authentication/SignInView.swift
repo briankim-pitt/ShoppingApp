@@ -56,7 +56,7 @@ struct SignInView: View {
                     .disabled(!viewModel.canSubmit)
                 }
             }
-            .navigationTitle("Shopping")
+            .appPageTitle("Shopping")
         }
     }
 }

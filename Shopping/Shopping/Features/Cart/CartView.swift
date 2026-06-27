@@ -1,18 +1,18 @@
 import SwiftUI
 
-struct BagView: View {
+struct CartView: View {
     var body: some View {
         NavigationStack {
             ContentUnavailableView {
-                Label("Your Bag Is Empty", systemImage: "bag")
+                Label("Your Cart Is Empty", systemImage: "cart")
             } description: {
                 Text("Products you plan to check out will appear here.")
             }
-            .navigationTitle("Bag")
+            .appPageTitle("Cart")
         }
     }
 }
 
 #Preview {
-    BagView()
+    CartView()
 }

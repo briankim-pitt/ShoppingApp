@@ -33,7 +33,8 @@ enum PreviewData {
         AppModel(
             authService: PreviewAuthService(hasSession: false),
             walletService: PreviewWalletService(wallet: nil),
-            onboardingService: PreviewOnboardingService(currencies: currencies)
+            onboardingService: PreviewOnboardingService(currencies: currencies),
+            productImportService: PreviewProductImportService()
         )
     }
 
@@ -47,7 +48,8 @@ enum PreviewData {
                     homeCurrencySelectedAt: nil
                 )
             ),
-            onboardingService: PreviewOnboardingService(currencies: currencies)
+            onboardingService: PreviewOnboardingService(currencies: currencies),
+            productImportService: PreviewProductImportService()
         )
         model.phase = .needsCurrency
         return model
@@ -57,7 +59,8 @@ enum PreviewData {
         let model = AppModel(
             authService: PreviewAuthService(hasSession: true),
             walletService: PreviewWalletService(wallet: wallet),
-            onboardingService: PreviewOnboardingService(currencies: currencies)
+            onboardingService: PreviewOnboardingService(currencies: currencies),
+            productImportService: PreviewProductImportService()
         )
         model.wallet = wallet
         model.phase = .ready
@@ -101,6 +104,39 @@ private struct PreviewOnboardingService: OnboardingServing {
             balance: Money(amount: 1000, currencyCode: currencyCode),
             homeCurrencySelected: true,
             homeCurrencySelectedAt: .now
+        )
+    }
+}
+
+private struct PreviewProductImportService: ProductImportServing {
+    func importProduct(from url: URL) async throws -> ProductImportResult {
+        let product = Product(
+            id: UUID(uuidString: "231525F8-2C65-4B6F-BAF3-DDAA68958549") ?? UUID(),
+            canonicalURL: url,
+            sourceDomain: url.host() ?? "example.com",
+            title: "Wooting 60HE+",
+            description: "Analog mechanical keyboard with rapid trigger and a compact layout.",
+            imageURL: URL(string: "https://wooting-website.ams3.cdn.digitaloceanspaces.com/products/keyboards/60HE/60HE_OG.webp"),
+            currencyCode: "USD",
+            priceAmount: 174.99,
+            createdAt: .now,
+            updatedAt: .now,
+            lastImportedAt: .now
+        )
+
+        return ProductImportResult(
+            product: product,
+            importRecord: ProductImport(
+                id: UUID(),
+                userID: UUID(),
+                sourceURL: url,
+                canonicalURL: url,
+                sourceDomain: product.sourceDomain,
+                productID: product.id,
+                status: "succeeded",
+                errorMessage: nil,
+                createdAt: .now
+            )
         )
     }
 }

@@ -23,6 +23,7 @@ struct RootView: View {
                 }
             }
         }
+        .fontDesign(.rounded)
         .animation(.default, value: appModel.phase)
     }
 }
@@ -37,7 +38,14 @@ struct RootView: View {
         .environment(PreviewData.onboardingAppModel)
 }
 
-#Preview("Ready") {
+#Preview("Ready - Light") {
     RootView()
         .environment(PreviewData.readyAppModel)
+        .preferredColorScheme(.light)
+}
+
+#Preview("Ready - Dark") {
+    RootView()
+        .environment(PreviewData.readyAppModel)
+        .preferredColorScheme(.dark)
 }

@@ -34,7 +34,7 @@ struct CurrencySelectionView: View {
                         .foregroundStyle(.red)
                 }
             }
-            .navigationTitle("Home Currency")
+            .appPageTitle("Home Currency")
             .safeAreaInset(edge: .bottom) {
                 Button {
                     Task {

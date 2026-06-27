@@ -7,6 +7,7 @@ final class AppModel {
     private let authService: any AuthServing
     private let walletService: any WalletServing
     private let onboardingService: any OnboardingServing
+    private let productImportService: any ProductImportServing
 
     var phase: AppPhase = .launching
     var wallet: VirtualWallet?
@@ -14,11 +15,13 @@ final class AppModel {
     init(
         authService: any AuthServing,
         walletService: any WalletServing,
-        onboardingService: any OnboardingServing
+        onboardingService: any OnboardingServing,
+        productImportService: any ProductImportServing
     ) {
         self.authService = authService
         self.walletService = walletService
         self.onboardingService = onboardingService
+        self.productImportService = productImportService
     }
 
     static func live() -> AppModel {
@@ -27,13 +30,15 @@ final class AppModel {
             return AppModel(
                 authService: dependencies.authService,
                 walletService: dependencies.walletService,
-                onboardingService: dependencies.onboardingService
+                onboardingService: dependencies.onboardingService,
+                productImportService: dependencies.productImportService
             )
         } catch {
             let model = AppModel(
                 authService: UnavailableAuthService(),
                 walletService: UnavailableWalletService(),
-                onboardingService: UnavailableOnboardingService()
+                onboardingService: UnavailableOnboardingService(),
+                productImportService: UnavailableProductImportService()
             )
             model.phase = .configurationError(error.localizedDescription)
             return model
@@ -77,6 +82,10 @@ final class AppModel {
     func selectHomeCurrency(_ currencyCode: String) async throws {
         wallet = try await onboardingService.setHomeCurrency(currencyCode)
         phase = .ready
+    }
+
+    func importProduct(from url: URL) async throws -> ProductImportResult {
+        try await productImportService.importProduct(from: url)
     }
 
     func refreshWallet() async {

@@ -21,7 +21,7 @@ struct HomeView: View {
                     }
                 }
             }
-            .navigationTitle("Home")
+            .appPageTitle("Home")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Sign Out", systemImage: "rectangle.portrait.and.arrow.right") {

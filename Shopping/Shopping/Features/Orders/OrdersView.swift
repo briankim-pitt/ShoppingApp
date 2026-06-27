@@ -8,7 +8,7 @@ struct OrdersView: View {
             } description: {
                 Text("Your virtual purchases will appear here.")
             }
-            .navigationTitle("Orders")
+            .appPageTitle("Orders")
         }
     }
 }

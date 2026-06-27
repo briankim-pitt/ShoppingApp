@@ -6,6 +6,7 @@ struct LiveDependencies {
     let authService: SupabaseAuthService
     let walletService: SupabaseWalletService
     let onboardingService: SupabaseOnboardingService
+    let productImportService: SupabaseProductImportService
 
     init() throws {
         try self.init(configuration: AppConfiguration())
@@ -21,5 +22,6 @@ struct LiveDependencies {
         authService = SupabaseAuthService(client: client)
         walletService = SupabaseWalletService(client: client)
         onboardingService = SupabaseOnboardingService(client: client)
+        productImportService = SupabaseProductImportService(client: client)
     }
 }

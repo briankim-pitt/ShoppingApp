@@ -7,3 +7,4 @@ node_modules
 worker/node_modules
 worker/dist
 supabase/.branches
+/QueueMe
