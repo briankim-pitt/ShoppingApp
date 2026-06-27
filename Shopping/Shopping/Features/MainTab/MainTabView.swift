@@ -5,55 +5,50 @@ struct MainTabView: View {
 
     var body: some View {
         TabView(selection: $selection) {
-            HomeView()
-                .tabItem {
-                    Image(MainTab.home.iconName(isSelected: selection == .home))
-                        .renderingMode(.template)
-                        .environment(\.symbolVariants, .none)
-                    Text("")
-                }
-                .accessibilityLabel(MainTab.home.title)
-                .tag(MainTab.home)
+            Tab(value: MainTab.home) {
+                HomeView()
+            } label: {
+                MainTabLabel(
+                    tab: .home,
+                    isSelected: selection == .home
+                )
+            }
 
-            FriendsView()
-                .tabItem {
-                    Image(MainTab.friends.iconName(isSelected: selection == .friends))
-                        .renderingMode(.template)
-                        .environment(\.symbolVariants, .none)
-                    Text("")
-                }
-                .accessibilityLabel(MainTab.friends.title)
-                .tag(MainTab.friends)
+            Tab(value: MainTab.friends) {
+                FriendsView()
+            } label: {
+                MainTabLabel(
+                    tab: .friends,
+                    isSelected: selection == .friends
+                )
+            }
 
-            OrdersView()
-                .tabItem {
-                    Image(MainTab.orders.iconName(isSelected: selection == .orders))
-                        .renderingMode(.template)
-                        .environment(\.symbolVariants, .none)
-                    Text("")
-                }
-                .accessibilityLabel(MainTab.orders.title)
-                .tag(MainTab.orders)
+            Tab(value: MainTab.orders) {
+                OrdersView()
+            } label: {
+                MainTabLabel(
+                    tab: .orders,
+                    isSelected: selection == .orders
+                )
+            }
 
-            CartView()
-                .tabItem {
-                    Image(MainTab.cart.iconName(isSelected: selection == .cart))
-                        .renderingMode(.template)
-                        .environment(\.symbolVariants, .none)
-                    Text("")
-                }
-                .accessibilityLabel(MainTab.cart.title)
-                .tag(MainTab.cart)
+            Tab(value: MainTab.cart) {
+                CartView()
+            } label: {
+                MainTabLabel(
+                    tab: .cart,
+                    isSelected: selection == .cart
+                )
+            }
 
-            SearchView()
-                .tabItem {
-                    Image(MainTab.search.iconName(isSelected: selection == .search))
-                        .renderingMode(.template)
-                        .environment(\.symbolVariants, .none)
-                    Text("")
-                }
-                .accessibilityLabel(MainTab.search.title)
-                .tag(MainTab.search)
+            Tab(value: MainTab.search) {
+                SearchView()
+            } label: {
+                MainTabLabel(
+                    tab: .search,
+                    isSelected: selection == .search
+                )
+            }
         }
         .tint(.primary)
     }

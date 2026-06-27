@@ -36,18 +36,7 @@ enum MainTab: CaseIterable, Hashable {
     }
 
     var selectedIconName: String {
-        switch self {
-        case .home:
-            "mingcute_home-4-fill.symbols"
-        case .friends:
-            "friend-fill.symbols"
-        case .orders:
-            "mingcute_package-2-fill.symbols"
-        case .cart:
-            "cart-fill.symbols"
-        case .search:
-            "mingcute_search-3-fill.symbols"
-        }
+        "\(unselectedIconName).fill"
     }
 
     func iconName(isSelected: Bool) -> String {

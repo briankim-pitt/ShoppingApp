@@ -1,0 +1,31 @@
+info:
+  name: Simulate Order Shipping
+  type: http
+  seq: 7
+
+http:
+  method: POST
+  url: "{{base_url}}/functions/v1/simulate-order-shipping"
+  headers:
+    - name: apikey
+      value: "{{anon_key}}"
+    - name: Authorization
+      value: Bearer {{access_token}}
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "order_id": "{{order_id}}",
+        "force": true
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Run Place Virtual Order first so its after-response script sets order_id. Each request forces that order forward by one shipping stage. Set force to false to advance only when next_status_at has passed.

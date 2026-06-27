@@ -38,7 +38,8 @@ Checkout is disabled until the user selects a home currency during onboarding.
 8. PostgreSQL checks that the product and balance currencies match.
 9. PostgreSQL checks that the virtual balance is sufficient.
 10. PostgreSQL deducts the balance and inserts the order, item snapshot, and ledger entry.
-11. PostgreSQL commits all changes together or rolls all of them back.
+11. The shipping trigger assigns an ETA, schedules the first transition, and records the `ordered` event.
+12. PostgreSQL commits all changes together or rolls all of them back.
 
 The row lock serializes checkouts for one user. Two simultaneous requests with
 the same idempotency key result in one debit and one replayed response.
@@ -51,6 +52,9 @@ the same idempotency key result in one debit and one replayed response.
 - `virtual_orders.balance_after_amount`: balance snapshot after checkout.
 - `virtual_order_items`: immutable product title, image, price, currency, and quantity snapshots.
 - `virtual_balance_transactions`: append-only audit trail for purchases, refunds, and adjustments.
+- `virtual_order_status_events`: append-only shipping and delivery timeline.
+
+See `SHIPPING_SIMULATION.md` for automatic timing and manual advancement.
 
 ## Security
 

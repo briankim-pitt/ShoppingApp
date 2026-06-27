@@ -25,10 +25,22 @@ http:
       }
   auth: inherit
 
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const data = res.getBody();
+
+        if (!data.order?.id) {
+          throw new Error("Checkout response did not contain an order ID");
+        }
+
+        bru.setVar("order_id", data.order.id);
+
 settings:
   encodeUrl: true
   timeout: 0
   followRedirects: true
   maxRedirects: 5
 
-docs: Send the same idempotency key twice to verify replay protection. Use a new UUID for a new checkout. Manual price and currency are only used when the product has no imported values.
+docs: Saves the returned order.id as the order_id collection variable for shipping simulation. Send the same idempotency key twice to verify replay protection. Use a new UUID for a new checkout. Manual price and currency are only used when the product has no imported values.

@@ -8,6 +8,7 @@ final class AppModel {
     private let walletService: any WalletServing
     private let onboardingService: any OnboardingServing
     private let productImportService: any ProductImportServing
+    private let ordersService: any OrdersServing
 
     var phase: AppPhase = .launching
     var wallet: VirtualWallet?
@@ -16,12 +17,14 @@ final class AppModel {
         authService: any AuthServing,
         walletService: any WalletServing,
         onboardingService: any OnboardingServing,
-        productImportService: any ProductImportServing
+        productImportService: any ProductImportServing,
+        ordersService: any OrdersServing
     ) {
         self.authService = authService
         self.walletService = walletService
         self.onboardingService = onboardingService
         self.productImportService = productImportService
+        self.ordersService = ordersService
     }
 
     static func live() -> AppModel {
@@ -31,14 +34,16 @@ final class AppModel {
                 authService: dependencies.authService,
                 walletService: dependencies.walletService,
                 onboardingService: dependencies.onboardingService,
-                productImportService: dependencies.productImportService
+                productImportService: dependencies.productImportService,
+                ordersService: dependencies.ordersService
             )
         } catch {
             let model = AppModel(
                 authService: UnavailableAuthService(),
                 walletService: UnavailableWalletService(),
                 onboardingService: UnavailableOnboardingService(),
-                productImportService: UnavailableProductImportService()
+                productImportService: UnavailableProductImportService(),
+                ordersService: UnavailableOrdersService()
             )
             model.phase = .configurationError(error.localizedDescription)
             return model
@@ -86,6 +91,10 @@ final class AppModel {
 
     func importProduct(from url: URL) async throws -> ProductImportResult {
         try await productImportService.importProduct(from: url)
+    }
+
+    func listOrders() async throws -> [VirtualOrder] {
+        try await ordersService.listOrders()
     }
 
     func refreshWallet() async {
