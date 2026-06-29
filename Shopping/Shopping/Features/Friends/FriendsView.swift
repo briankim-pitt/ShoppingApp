@@ -1,15 +1,63 @@
+import Foundation
 import SwiftUI
 
 struct FriendsView: View {
+    @State private var searchText = ""
+    @State private var isShowingAddFriends = false
+    @Namespace private var addFriendsTransition
+
     var body: some View {
         NavigationStack {
-            ContentUnavailableView {
-                Label("No Friends Yet", systemImage: "person.2")
-            } description: {
-                Text("Friends and their activity will appear here.")
+            ZStack(alignment: .top) {
+                ScrollView {
+                    if searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        ContentUnavailableView {
+                            Label("No Friends Yet", systemImage: "person.2")
+                        } description: {
+                            Text("Friends and their activity will appear here.")
+                        }
+                        .containerRelativeFrame(.vertical)
+                    } else {
+                        ContentUnavailableView.search
+                            .containerRelativeFrame(.vertical)
+                    }
+                }
+                .scrollBounceBehavior(.always)
+                .scrollDismissesKeyboard(.interactively)
+
+                FriendsSearchBar(text: $searchText)
+                    .padding(.horizontal)
+                    .padding(.top, 8)
             }
             .appPageTitle("Friends")
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(role: .confirm, action: showAddFriends) {
+                        Label("Add Friends", systemImage: "plus")
+                            .labelStyle(.iconOnly)
+                    }
+                    .buttonStyle(.glassProminent)
+                    .matchedTransitionSource(
+                        id: "addFriends",
+                        in: addFriendsTransition
+                    )
+                }
+            }
+            .sheet(isPresented: $isShowingAddFriends) {
+                AddFriendsView()
+                    .presentationDetents([.medium, .large])
+                    .navigationTransition(
+                        .zoom(
+                            sourceID: "addFriends",
+                            in: addFriendsTransition
+                        )
+                    )
+            }
         }
+    }
+
+    private func showAddFriends() {
+        isShowingAddFriends = true
     }
 }
 

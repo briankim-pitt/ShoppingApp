@@ -12,18 +12,32 @@ struct OrdersView: View {
                         .controlSize(.large)
                 } else if let errorMessage = viewModel.errorMessage,
                           viewModel.orders.isEmpty {
-                    ContentUnavailableView {
-                        Label("Couldn't Load Orders", systemImage: "wifi.exclamationmark")
-                    } description: {
-                        Text(errorMessage)
-                    } actions: {
-                        Button("Try Again", systemImage: "arrow.clockwise", action: retry)
+                    ScrollView {
+                        ContentUnavailableView {
+                            Label("Couldn't Load Orders", systemImage: "wifi.exclamationmark")
+                        } description: {
+                            Text(errorMessage)
+                        } actions: {
+                            Button("Try Again", systemImage: "arrow.clockwise", action: retry)
+                        }
+                        .containerRelativeFrame(.vertical)
+                    }
+                    .scrollBounceBehavior(.always)
+                    .refreshable {
+                        await viewModel.refresh(using: appModel)
                     }
                 } else if viewModel.orders.isEmpty {
-                    ContentUnavailableView {
-                        Label("No Orders Yet", systemImage: "shippingbox")
-                    } description: {
-                        Text("Your virtual purchases will appear here.")
+                    ScrollView {
+                        ContentUnavailableView {
+                            Label("No Orders Yet", systemImage: "shippingbox")
+                        } description: {
+                            Text("Your virtual purchases will appear here.")
+                        }
+                        .containerRelativeFrame(.vertical)
+                    }
+                    .scrollBounceBehavior(.always)
+                    .refreshable {
+                        await viewModel.refresh(using: appModel)
                     }
                 } else {
                     List {

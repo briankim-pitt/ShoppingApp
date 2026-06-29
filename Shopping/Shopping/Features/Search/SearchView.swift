@@ -27,7 +27,16 @@ struct SearchView: View {
                 }
 
                 if let result = viewModel.result {
-                    ProductImportResultView(result: result)
+                    ProductImportResultView(
+                        result: result,
+                        isInCart: appModel.cart.contains(productID: result.product.id),
+                        addToCart: {
+                            appModel.cart.add(
+                                result.product,
+                                homeCurrencyCode: appModel.wallet?.balance.currencyCode
+                            )
+                        }
+                    )
                 }
             }
             .appPageTitle("Search")

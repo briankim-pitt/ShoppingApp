@@ -9,7 +9,35 @@ The iOS app must never update balances or create orders directly.
 
 Checkout is disabled until the user selects a home currency during onboarding.
 
-## Request
+## Cart Request
+
+The iOS app uses the atomic cart endpoint:
+
+`POST /functions/v1/checkout-cart`
+
+```json
+{
+  "items": [
+    {
+      "product_id": "231525f8-2c65-4b6f-baf3-ddaa68958549",
+      "quantity": 1,
+      "manual_price_amount": 179.99,
+      "manual_currency_code": "USD"
+    },
+    {
+      "product_id": "3ea24570-ee01-4424-b2a2-9938a8f2ab35",
+      "quantity": 1
+    }
+  ],
+  "idempotency_key": "caa7fe08-b8d3-4936-89a4-70ff815254cc"
+}
+```
+
+The endpoint accepts 1-50 unique products. Each quantity must be 1-99.
+`manual_price_amount` is only used when the imported product has no price.
+`manual_currency_code` is only used when the imported product has no currency.
+
+The older single-product endpoint remains available for compatibility.
 
 `POST /functions/v1/place-virtual-order`
 
@@ -23,21 +51,18 @@ Checkout is disabled until the user selects a home currency during onboarding.
 }
 ```
 
-`manual_price_amount` is only used when the imported product has no price.
-`manual_currency_code` is only used when the imported product has no currency.
-
 ## Checkout Sequence
 
 1. `withSupabase({ auth: "user" })` verifies the access token.
-2. Zod validates UUIDs, quantity, manual price, and currency.
-3. The Edge Function calls `public.place_virtual_order` with the verified user ID.
+2. Zod validates the cart size, UUIDs, quantities, manual prices, and currencies.
+3. The Edge Function calls `public.place_virtual_cart_order` with the verified user ID.
 4. PostgreSQL locks that user's profile row with `FOR UPDATE`.
 5. PostgreSQL checks that the user selected a home currency.
 6. PostgreSQL checks the idempotency key for an existing order.
-7. PostgreSQL loads the product and chooses the imported or manual price.
-8. PostgreSQL checks that the product and balance currencies match.
+7. PostgreSQL loads every product and chooses each imported or manual price.
+8. PostgreSQL checks that every product uses the balance currency.
 9. PostgreSQL checks that the virtual balance is sufficient.
-10. PostgreSQL deducts the balance and inserts the order, item snapshot, and ledger entry.
+10. PostgreSQL deducts the balance and inserts one order, all item snapshots, and one ledger entry.
 11. The shipping trigger assigns an ETA, schedules the first transition, and records the `ordered` event.
 12. PostgreSQL commits all changes together or rolls all of them back.
 
@@ -76,5 +101,6 @@ execute the checkout database function.
 ## Local Testing
 
 Start local Supabase, send the Bruno `Sign In` request, then send
-`Place Virtual Order`. Reusing its idempotency key should return the same order
-without deducting the balance again.
+`Checkout Cart`. Reusing its idempotency key should return the same order
+without deducting the balance again. Change the idempotency key whenever the
+cart contents change or the user begins a new checkout.

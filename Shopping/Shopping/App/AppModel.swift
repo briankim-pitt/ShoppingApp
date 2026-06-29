@@ -9,22 +9,29 @@ final class AppModel {
     private let onboardingService: any OnboardingServing
     private let productImportService: any ProductImportServing
     private let ordersService: any OrdersServing
+    private let checkoutService: any CheckoutServing
 
     var phase: AppPhase = .launching
     var wallet: VirtualWallet?
+    var selectedTab: MainTab = .home
+    let cart: CartStore
 
     init(
         authService: any AuthServing,
         walletService: any WalletServing,
         onboardingService: any OnboardingServing,
         productImportService: any ProductImportServing,
-        ordersService: any OrdersServing
+        ordersService: any OrdersServing,
+        checkoutService: any CheckoutServing,
+        cart: CartStore = CartStore()
     ) {
         self.authService = authService
         self.walletService = walletService
         self.onboardingService = onboardingService
         self.productImportService = productImportService
         self.ordersService = ordersService
+        self.checkoutService = checkoutService
+        self.cart = cart
     }
 
     static func live() -> AppModel {
@@ -35,7 +42,8 @@ final class AppModel {
                 walletService: dependencies.walletService,
                 onboardingService: dependencies.onboardingService,
                 productImportService: dependencies.productImportService,
-                ordersService: dependencies.ordersService
+                ordersService: dependencies.ordersService,
+                checkoutService: dependencies.checkoutService
             )
         } catch {
             let model = AppModel(
@@ -43,7 +51,8 @@ final class AppModel {
                 walletService: UnavailableWalletService(),
                 onboardingService: UnavailableOnboardingService(),
                 productImportService: UnavailableProductImportService(),
-                ordersService: UnavailableOrdersService()
+                ordersService: UnavailableOrdersService(),
+                checkoutService: UnavailableCheckoutService()
             )
             model.phase = .configurationError(error.localizedDescription)
             return model
@@ -76,7 +85,9 @@ final class AppModel {
 
     func signOut() async {
         try? await authService.signOut()
+        cart.clear()
         wallet = nil
+        selectedTab = .home
         phase = .signedOut
     }
 
@@ -95,6 +106,23 @@ final class AppModel {
 
     func listOrders() async throws -> [VirtualOrder] {
         try await ordersService.listOrders()
+    }
+
+    func checkoutCart(idempotencyKey: UUID) async throws -> CartCheckoutResult {
+        guard !cart.items.isEmpty else {
+            throw APIError.message("Your cart is empty.")
+        }
+
+        let result = try await checkoutService.checkout(
+            items: cart.items,
+            idempotencyKey: idempotencyKey
+        )
+        wallet = VirtualWallet(
+            balance: result.balance,
+            homeCurrencySelected: true,
+            homeCurrencySelectedAt: wallet?.homeCurrencySelectedAt
+        )
+        return result
     }
 
     func refreshWallet() async {

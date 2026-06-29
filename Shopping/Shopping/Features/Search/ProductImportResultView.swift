@@ -2,6 +2,8 @@ import SwiftUI
 
 struct ProductImportResultView: View {
     let result: ProductImportResult
+    let isInCart: Bool
+    let addToCart: () -> Void
 
     var body: some View {
         Section("Imported Product") {
@@ -28,6 +30,13 @@ struct ProductImportResultView: View {
                 }
             }
             .padding(.vertical, 4)
+
+            Button(
+                isInCart ? "Added to Cart" : "Add to Cart",
+                systemImage: isInCart ? "checkmark" : "cart.badge.plus",
+                action: addToCart
+            )
+            .disabled(isInCart)
         }
     }
 }

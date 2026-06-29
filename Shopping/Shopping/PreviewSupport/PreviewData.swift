@@ -29,6 +29,23 @@ enum PreviewData {
         homeCurrencySelectedAt: .now
     )
 
+    nonisolated static var product: Product {
+        Product(
+            id: UUID(uuidString: "231525F8-2C65-4B6F-BAF3-DDAA68958549") ?? UUID(),
+            canonicalURL: URL(string: "https://wooting.io/wooting-60he")
+                ?? URL(fileURLWithPath: "/"),
+            sourceDomain: "wooting.io",
+            title: "Wooting 60HE+",
+            description: "Analog mechanical keyboard with rapid trigger and a compact layout.",
+            imageURL: URL(string: "https://wooting-website.ams3.cdn.digitaloceanspaces.com/products/keyboards/60HE/60HE_OG.webp"),
+            currencyCode: "USD",
+            priceAmount: 174.99,
+            createdAt: .now,
+            updatedAt: .now,
+            lastImportedAt: .now
+        )
+    }
+
     static var orders: [VirtualOrder] {
         let now = Date.now
         let orderID = UUID(uuidString: "F1FE99E6-E99C-431A-ABA9-CCE5D2A9DE5B") ?? UUID()
@@ -91,7 +108,8 @@ enum PreviewData {
             walletService: PreviewWalletService(wallet: nil),
             onboardingService: PreviewOnboardingService(currencies: currencies),
             productImportService: PreviewProductImportService(),
-            ordersService: PreviewOrdersService(orders: [])
+            ordersService: PreviewOrdersService(orders: []),
+            checkoutService: PreviewCheckoutService()
         )
     }
 
@@ -107,7 +125,8 @@ enum PreviewData {
             ),
             onboardingService: PreviewOnboardingService(currencies: currencies),
             productImportService: PreviewProductImportService(),
-            ordersService: PreviewOrdersService(orders: [])
+            ordersService: PreviewOrdersService(orders: []),
+            checkoutService: PreviewCheckoutService()
         )
         model.phase = .needsCurrency
         return model
@@ -119,10 +138,17 @@ enum PreviewData {
             walletService: PreviewWalletService(wallet: wallet),
             onboardingService: PreviewOnboardingService(currencies: currencies),
             productImportService: PreviewProductImportService(),
-            ordersService: PreviewOrdersService(orders: orders)
+            ordersService: PreviewOrdersService(orders: orders),
+            checkoutService: PreviewCheckoutService()
         )
         model.wallet = wallet
         model.phase = .ready
+        return model
+    }
+
+    static var cartAppModel: AppModel {
+        let model = readyAppModel
+        model.cart.add(product, homeCurrencyCode: wallet.balance.currencyCode)
         return model
     }
 }
@@ -169,19 +195,7 @@ private struct PreviewOnboardingService: OnboardingServing {
 
 private struct PreviewProductImportService: ProductImportServing {
     func importProduct(from url: URL) async throws -> ProductImportResult {
-        let product = Product(
-            id: UUID(uuidString: "231525F8-2C65-4B6F-BAF3-DDAA68958549") ?? UUID(),
-            canonicalURL: url,
-            sourceDomain: url.host() ?? "example.com",
-            title: "Wooting 60HE+",
-            description: "Analog mechanical keyboard with rapid trigger and a compact layout.",
-            imageURL: URL(string: "https://wooting-website.ams3.cdn.digitaloceanspaces.com/products/keyboards/60HE/60HE_OG.webp"),
-            currencyCode: "USD",
-            priceAmount: 174.99,
-            createdAt: .now,
-            updatedAt: .now,
-            lastImportedAt: .now
-        )
+        let product = PreviewData.product
 
         return ProductImportResult(
             product: product,
@@ -205,5 +219,44 @@ private struct PreviewOrdersService: OrdersServing {
 
     func listOrders() async throws -> [VirtualOrder] {
         orders
+    }
+}
+
+private struct PreviewCheckoutService: CheckoutServing {
+    func checkout(
+        items: [CartItem],
+        idempotencyKey: UUID
+    ) async throws -> CartCheckoutResult {
+        let total = items.reduce(Decimal.zero) {
+            $0 + ($1.lineTotal ?? 0)
+        }
+        let currencyCode = items.first?.currencyCode ?? "USD"
+
+        return CartCheckoutResult(
+            order: PlacedVirtualOrder(
+                id: UUID(),
+                status: .ordered,
+                totalAmount: total,
+                currencyCode: currencyCode,
+                estimatedDeliveryAt: Date.now.addingTimeInterval(270)
+            ),
+            items: items.map {
+                VirtualOrderItem(
+                    id: UUID(),
+                    productID: $0.product.id,
+                    title: $0.product.title,
+                    imageURL: $0.product.imageURL,
+                    currencyCode: $0.currencyCode,
+                    unitPriceAmount: $0.unitPrice ?? 0,
+                    quantity: $0.quantity,
+                    createdAt: .now
+                )
+            },
+            balance: Money(
+                amount: max(Decimal(850) - total, 0),
+                currencyCode: currencyCode
+            ),
+            idempotentReplay: false
+        )
     }
 }

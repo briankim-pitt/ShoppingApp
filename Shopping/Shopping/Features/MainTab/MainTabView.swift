@@ -1,16 +1,18 @@
 import SwiftUI
 
 struct MainTabView: View {
-    @State private var selection: MainTab = .home
+    @Environment(AppModel.self) private var appModel
 
     var body: some View {
-        TabView(selection: $selection) {
+        @Bindable var appModel = appModel
+
+        TabView(selection: $appModel.selectedTab) {
             Tab(value: MainTab.home) {
                 HomeView()
             } label: {
                 MainTabLabel(
                     tab: .home,
-                    isSelected: selection == .home
+                    isSelected: appModel.selectedTab == .home
                 )
             }
 
@@ -19,7 +21,7 @@ struct MainTabView: View {
             } label: {
                 MainTabLabel(
                     tab: .friends,
-                    isSelected: selection == .friends
+                    isSelected: appModel.selectedTab == .friends
                 )
             }
 
@@ -28,7 +30,7 @@ struct MainTabView: View {
             } label: {
                 MainTabLabel(
                     tab: .orders,
-                    isSelected: selection == .orders
+                    isSelected: appModel.selectedTab == .orders
                 )
             }
 
@@ -37,7 +39,7 @@ struct MainTabView: View {
             } label: {
                 MainTabLabel(
                     tab: .cart,
-                    isSelected: selection == .cart
+                    isSelected: appModel.selectedTab == .cart
                 )
             }
 
@@ -46,7 +48,7 @@ struct MainTabView: View {
             } label: {
                 MainTabLabel(
                     tab: .search,
-                    isSelected: selection == .search
+                    isSelected: appModel.selectedTab == .search
                 )
             }
         }

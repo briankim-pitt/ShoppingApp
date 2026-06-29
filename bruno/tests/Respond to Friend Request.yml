@@ -1,11 +1,11 @@
 info:
-  name: Simulate Order Shipping
+  name: Respond to Friend Request
   type: http
-  seq: 8
+  seq: 10
 
 http:
   method: POST
-  url: "{{base_url}}/functions/v1/simulate-order-shipping"
+  url: "{{base_url}}/functions/v1/respond-friend-request"
   headers:
     - name: apikey
       value: "{{anon_key}}"
@@ -17,8 +17,8 @@ http:
     type: json
     data: |-
       {
-        "order_id": "{{order_id}}",
-        "force": true
+        "request_id": "{{friend_request_id}}",
+        "action": "accepted"
       }
   auth: inherit
 
@@ -28,4 +28,4 @@ settings:
   followRedirects: true
   maxRedirects: 5
 
-docs: Run Place Virtual Order first so its after-response script sets order_id. Each request forces that order forward by one shipping stage. Set force to false to advance only when next_status_at has passed.
+docs: Sign in as the recipient before sending this request. Use accepted to create the friendship atomically or rejected to decline without creating one.

@@ -281,10 +281,12 @@ The current backend maps into Swift services as follows:
 | `OnboardingService.setHomeCurrency()` | `set-home-currency` Edge Function |
 | `ProfileService.getWallet()` | `get_my_wallet` database RPC |
 | `ProductImportService.importURL()` | `import-product` Edge Function |
-| `CheckoutService.placeOrder()` | `place-virtual-order` Edge Function |
+| `CheckoutService.checkout()` | `checkout-cart` Edge Function |
 | `OrdersService.listOrders()` | `virtual_orders` and `virtual_order_items` |
 | `WishlistsService` | `wishlists` and `wishlist_items` |
-| `SocialService` | `profiles`, `friend_requests`, and `friendships` |
+| `SocialService.sendRequest()` | `send-friend-request` Edge Function |
+| `SocialService.respondToRequest()` | `respond-friend-request` Edge Function |
+| `SocialService.listFriends()` | `friendships` and `profiles` |
 
 ## First Vertical Slice
 

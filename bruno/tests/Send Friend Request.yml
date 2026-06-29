@@ -1,0 +1,42 @@
+info:
+  name: Send Friend Request
+  type: http
+  seq: 9
+
+http:
+  method: POST
+  url: "{{base_url}}/functions/v1/send-friend-request"
+  headers:
+    - name: apikey
+      value: "{{anon_key}}"
+    - name: Authorization
+      value: Bearer {{access_token}}
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "recipient_user_id": "{{recipient_user_id}}"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const data = res.getBody();
+
+        if (!data.request?.id) {
+          throw new Error("Response did not contain a friend request ID");
+        }
+
+        bru.setVar("friend_request_id", data.request.id);
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Set recipient_user_id to another profile UUID. The authenticated user is always used as the requester. Successful responses save friend_request_id for Respond to Friend Request.

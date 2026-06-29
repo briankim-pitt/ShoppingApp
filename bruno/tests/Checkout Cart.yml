@@ -1,0 +1,54 @@
+info:
+  name: Checkout Cart
+  type: http
+  seq: 7
+
+http:
+  method: POST
+  url: "{{base_url}}/functions/v1/checkout-cart"
+  headers:
+    - name: apikey
+      value: "{{anon_key}}"
+    - name: Authorization
+      value: Bearer {{access_token}}
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "items": [
+          {
+            "product_id": "231525f8-2c65-4b6f-baf3-ddaa68958549",
+            "quantity": 1,
+            "manual_price_amount": 179.99,
+            "manual_currency_code": "USD"
+          },
+          {
+            "product_id": "3ea24570-ee01-4424-b2a2-9938a8f2ab35",
+            "quantity": 1
+          }
+        ],
+        "idempotency_key": "caa7fe08-b8d3-4936-89a4-70ff815254cc"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const data = res.getBody();
+
+        if (!data.order?.id) {
+          throw new Error("Cart checkout response did not contain an order ID");
+        }
+
+        bru.setVar("order_id", data.order.id);
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Creates one order for every item in the cart and saves order.id for shipping simulation. Use a new idempotency UUID for a changed cart or a new checkout.
