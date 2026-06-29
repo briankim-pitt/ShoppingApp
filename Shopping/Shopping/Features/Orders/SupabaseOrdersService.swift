@@ -28,6 +28,8 @@ struct SupabaseOrdersService: OrdersServing {
                   image_url_snapshot,
                   currency_code,
                   unit_price_amount,
+                  source_currency_code,
+                  source_price_amount,
                   quantity,
                   created_at
                 ),

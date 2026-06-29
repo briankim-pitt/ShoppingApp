@@ -31,7 +31,8 @@ The response contains normalized `Product` records:
       "description": null,
       "image_url": "https://i.ebayimg.com/images/example.jpg",
       "currency_code": "USD",
-      "price_amount": 79.99
+      "price_amount": 79.99,
+      "wandercoin_price_amount": 79.99
     }
   ],
   "total": 1000,
@@ -72,26 +73,13 @@ npx supabase functions deploy search-products
 
 Do not put eBay credentials in the Swift app or commit `.env.local`.
 
-## Marketplace And Currency
+## Marketplace And WanderCoin Pricing
 
-The Swift service maps these home currencies:
-
-| Currency | Marketplace |
-| --- | --- |
-| USD | `EBAY_US` |
-| GBP | `EBAY_GB` |
-| EUR | `EBAY_DE` |
-| AUD | `EBAY_AU` |
-| CAD | `EBAY_CA` |
-| CHF | `EBAY_CH` |
-| HKD | `EBAY_HK` |
-| PLN | `EBAY_PL` |
-| SGD | `EBAY_SG` |
-
-The eBay Browse API does not expose an `EBAY_JP` marketplace. Unsupported
-currencies use the function's configured default marketplace. Prices are never
-silently converted, so checkout remains disabled when a listing currency does
-not match the user's virtual wallet.
+Search defaults to `EBAY_US`. USD prices are copied to
+`wandercoin_price_amount` at the fixed rate of one USD to one WanderCoin.
+The original `price_amount` and `currency_code` remain unchanged as source
+metadata. Non-USD listings do not receive an automatic coin price and require
+a manual WanderCoin amount before checkout.
 
 ## Swift Flow
 

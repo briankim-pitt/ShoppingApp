@@ -19,7 +19,7 @@ final class CartStore {
         items.contains { $0.id == productID }
     }
 
-    func add(_ product: Product, homeCurrencyCode: String?) {
+    func add(_ product: Product) {
         if let index = items.firstIndex(where: { $0.id == product.id }) {
             items[index].quantity = min(items[index].quantity + 1, 99)
         } else {
@@ -27,10 +27,7 @@ final class CartStore {
                 CartItem(
                     product: product,
                     quantity: 1,
-                    manualPriceAmount: nil,
-                    manualCurrencyCode: product.currencyCode == nil
-                        ? homeCurrencyCode?.uppercased()
-                        : nil
+                    manualCoinAmount: nil
                 )
             )
         }
@@ -45,11 +42,11 @@ final class CartStore {
         recordMutation()
     }
 
-    func setManualPrice(_ price: Decimal?, for productID: UUID) {
+    func setManualCoinPrice(_ price: Decimal?, for productID: UUID) {
         guard let index = items.firstIndex(where: { $0.id == productID }) else {
             return
         }
-        items[index].manualPriceAmount = price
+        items[index].manualCoinAmount = price
         recordMutation()
     }
 
@@ -64,9 +61,9 @@ final class CartStore {
         recordMutation()
     }
 
-    func total(homeCurrencyCode: String) -> Decimal? {
+    func total() -> Decimal? {
         guard !items.isEmpty,
-              items.allSatisfy({ $0.isReady(homeCurrencyCode: homeCurrencyCode) }) else {
+              items.allSatisfy(\.isReady) else {
             return nil
         }
 
@@ -75,8 +72,8 @@ final class CartStore {
         }
     }
 
-    func canCheckout(homeCurrencyCode: String) -> Bool {
-        total(homeCurrencyCode: homeCurrencyCode) != nil
+    func canCheckout() -> Bool {
+        total() != nil
     }
 
     private func recordMutation() {

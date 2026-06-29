@@ -51,27 +51,34 @@ struct OrderDetailView: View {
                             }
                         }
                     }
+                    .brandListRow()
 
                     Section("Items") {
                         ForEach(order.items) { item in
                             OrderItemRow(item: item)
                         }
                     }
+                    .brandListRow()
 
                     Section("Tracking") {
                         OrderTrackingTimeline(order: order)
                             .padding(.vertical, 4)
                     }
+                    .brandListRow()
                 }
                 .refreshable {
                     await viewModel.refresh(using: appModel)
                 }
+                .brandPageBackground()
             } else {
-                ContentUnavailableView(
-                    "Order Unavailable",
-                    systemImage: "shippingbox",
-                    description: Text("This order is no longer available.")
-                )
+                ContentUnavailableView {
+                    BrandEmptyStateLabel(
+                        title: "Order Unavailable",
+                        systemImage: "shippingbox"
+                    )
+                } description: {
+                    Text("This order is no longer available.")
+                }
             }
         }
         .appPageTitle("Order Details")

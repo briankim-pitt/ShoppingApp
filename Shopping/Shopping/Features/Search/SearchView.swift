@@ -33,6 +33,7 @@ struct SearchView: View {
                             ProgressView()
                             Spacer()
                         }
+                        .listRowBackground(Color.clear)
                     }
 
                     if let correctedQuery = viewModel.correctedQuery {
@@ -43,6 +44,7 @@ struct SearchView: View {
                             )
                             .foregroundStyle(.secondary)
                         }
+                        .brandListRow()
                     }
 
                     if viewModel.hasSearchedProducts,
@@ -50,8 +52,16 @@ struct SearchView: View {
                        viewModel.errorMessage == nil,
                        !viewModel.isSearchingProducts {
                         Section {
-                            ContentUnavailableView.search
+                            ContentUnavailableView {
+                                BrandEmptyStateLabel(
+                                    title: "No Results",
+                                    systemImage: "magnifyingglass"
+                                )
+                            } description: {
+                                Text("Try another product or brand.")
+                            }
                         }
+                        .brandListRow()
                     }
 
                     if !viewModel.products.isEmpty {
@@ -63,15 +73,12 @@ struct SearchView: View {
                                         productID: product.id
                                     ),
                                     addToCart: {
-                                        appModel.cart.add(
-                                            product,
-                                            homeCurrencyCode: appModel.wallet?
-                                                .balance.currencyCode
-                                        )
+                                        appModel.cart.add(product)
                                     }
                                 )
                             }
                         }
+                        .brandListRow()
                     }
                 } else {
                     ProductImportForm(
@@ -85,6 +92,7 @@ struct SearchView: View {
                             ProgressView()
                             Spacer()
                         }
+                        .listRowBackground(Color.clear)
                     }
 
                     if let result = viewModel.result {
@@ -94,11 +102,7 @@ struct SearchView: View {
                                 productID: result.product.id
                             ),
                             addToCart: {
-                                appModel.cart.add(
-                                    result.product,
-                                    homeCurrencyCode: appModel.wallet?
-                                        .balance.currencyCode
-                                )
+                                appModel.cart.add(result.product)
                             }
                         )
                     }
@@ -108,7 +112,8 @@ struct SearchView: View {
                     SearchErrorView(message: errorMessage)
                 }
             }
-            .appPageTitle("Search")
+            .brandPageBackground()
+            .appPageTitle("Discover")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     if viewModel.mode == .products {
@@ -117,6 +122,7 @@ struct SearchView: View {
                             systemImage: "magnifyingglass",
                             action: searchProducts
                         )
+                        .tint(Color.brandPrimary)
                         .disabled(!viewModel.canSearchProducts)
                     } else {
                         Button(
@@ -124,6 +130,7 @@ struct SearchView: View {
                             systemImage: "square.and.arrow.down",
                             action: importProduct
                         )
+                        .tint(Color.brandPrimary)
                         .disabled(!viewModel.canImport)
                     }
                 }

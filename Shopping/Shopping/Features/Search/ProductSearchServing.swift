@@ -1,6 +1,3 @@
 protocol ProductSearchServing: Sendable {
-    func searchProducts(
-        query: String,
-        homeCurrencyCode: String?
-    ) async throws -> ProductSearchResponse
+    func searchProducts(query: String) async throws -> ProductSearchResponse
 }

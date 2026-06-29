@@ -36,13 +36,7 @@ struct VirtualOrder: Decodable, Equatable, Identifiable, Sendable {
     }
 
     var totalText: String {
-        guard let currencyCode else {
-            return totalAmount.formatted()
-        }
-
-        return totalAmount.formatted(
-            .currency(code: currencyCode).presentation(.narrow)
-        )
+        totalAmount.wanderCoinText
     }
 
     var itemCount: Int {

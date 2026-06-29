@@ -12,7 +12,10 @@ struct FriendsView: View {
                 ScrollView {
                     if searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                         ContentUnavailableView {
-                            Label("No Friends Yet", systemImage: "person.2")
+                            BrandEmptyStateLabel(
+                                title: "No Friends Yet",
+                                systemImage: "person.2"
+                            )
                         } description: {
                             Text("Friends and their activity will appear here.")
                         }
@@ -24,6 +27,7 @@ struct FriendsView: View {
                 }
                 .scrollBounceBehavior(.always)
                 .scrollDismissesKeyboard(.interactively)
+                .brandPageBackground()
 
                 FriendsSearchBar(text: $searchText)
                     .padding(.horizontal)
@@ -37,6 +41,7 @@ struct FriendsView: View {
                             .labelStyle(.iconOnly)
                     }
                     .buttonStyle(.glassProminent)
+                    .tint(Color.brandPrimary)
                     .matchedTransitionSource(
                         id: "addFriends",
                         in: addFriendsTransition

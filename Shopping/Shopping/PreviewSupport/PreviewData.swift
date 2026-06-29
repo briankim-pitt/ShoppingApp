@@ -2,29 +2,8 @@ import Foundation
 
 @MainActor
 enum PreviewData {
-    static let currencies = [
-        SupportedCurrency(
-            currencyCode: "USD",
-            displayName: "US Dollar",
-            symbol: "$",
-            minorUnit: 2
-        ),
-        SupportedCurrency(
-            currencyCode: "JPY",
-            displayName: "Japanese Yen",
-            symbol: "¥",
-            minorUnit: 0
-        ),
-        SupportedCurrency(
-            currencyCode: "EUR",
-            displayName: "Euro",
-            symbol: "€",
-            minorUnit: 2
-        ),
-    ]
-
     static let wallet = VirtualWallet(
-        balance: Money(amount: 850, currencyCode: "USD"),
+        balance: Money(amount: 1250, currencyCode: "WCN"),
         homeCurrencySelected: true,
         homeCurrencySelectedAt: .now
     )
@@ -40,6 +19,7 @@ enum PreviewData {
             imageURL: URL(string: "https://wooting-website.ams3.cdn.digitaloceanspaces.com/products/keyboards/60HE/60HE_OG.webp"),
             currencyCode: "USD",
             priceAmount: 174.99,
+            wanderCoinPriceAmount: 174.99,
             createdAt: .now,
             updatedAt: .now,
             lastImportedAt: .now
@@ -55,7 +35,7 @@ enum PreviewData {
                 id: orderID,
                 status: .shipped,
                 totalAmount: 179.99,
-                currencyCode: "USD",
+                currencyCode: "WCN",
                 placedAt: now.addingTimeInterval(-180),
                 processingAt: now.addingTimeInterval(-120),
                 shippedAt: now.addingTimeInterval(-60),
@@ -75,7 +55,7 @@ enum PreviewData {
                         imageURL: URL(
                             string: "https://wooting-website.ams3.cdn.digitaloceanspaces.com/products/keyboards/60HE/60HE_OG.webp"
                         ),
-                        currencyCode: "USD",
+                        currencyCode: "WCN",
                         unitPriceAmount: 179.99,
                         quantity: 1,
                         createdAt: now.addingTimeInterval(-180)
@@ -106,39 +86,17 @@ enum PreviewData {
         AppModel(
             authService: PreviewAuthService(hasSession: false),
             walletService: PreviewWalletService(wallet: nil),
-            onboardingService: PreviewOnboardingService(currencies: currencies),
             productImportService: PreviewProductImportService(),
             productSearchService: PreviewProductSearchService(),
             ordersService: PreviewOrdersService(orders: []),
             checkoutService: PreviewCheckoutService()
         )
-    }
-
-    static var onboardingAppModel: AppModel {
-        let model = AppModel(
-            authService: PreviewAuthService(hasSession: true),
-            walletService: PreviewWalletService(
-                wallet: VirtualWallet(
-                    balance: Money(amount: 1000, currencyCode: "USD"),
-                    homeCurrencySelected: false,
-                    homeCurrencySelectedAt: nil
-                )
-            ),
-            onboardingService: PreviewOnboardingService(currencies: currencies),
-            productImportService: PreviewProductImportService(),
-            productSearchService: PreviewProductSearchService(),
-            ordersService: PreviewOrdersService(orders: []),
-            checkoutService: PreviewCheckoutService()
-        )
-        model.phase = .needsCurrency
-        return model
     }
 
     static var readyAppModel: AppModel {
         let model = AppModel(
             authService: PreviewAuthService(hasSession: true),
             walletService: PreviewWalletService(wallet: wallet),
-            onboardingService: PreviewOnboardingService(currencies: currencies),
             productImportService: PreviewProductImportService(),
             productSearchService: PreviewProductSearchService(),
             ordersService: PreviewOrdersService(orders: orders),
@@ -151,7 +109,7 @@ enum PreviewData {
 
     static var cartAppModel: AppModel {
         let model = readyAppModel
-        model.cart.add(product, homeCurrencyCode: wallet.balance.currencyCode)
+        model.cart.add(product)
         return model
     }
 }
@@ -180,22 +138,6 @@ private struct PreviewWalletService: WalletServing {
     }
 }
 
-private struct PreviewOnboardingService: OnboardingServing {
-    let currencies: [SupportedCurrency]
-
-    func listCurrencies() async throws -> [SupportedCurrency] {
-        currencies
-    }
-
-    func setHomeCurrency(_ currencyCode: String) async throws -> VirtualWallet {
-        VirtualWallet(
-            balance: Money(amount: 1000, currencyCode: currencyCode),
-            homeCurrencySelected: true,
-            homeCurrencySelectedAt: .now
-        )
-    }
-}
-
 private struct PreviewProductImportService: ProductImportServing {
     func importProduct(from url: URL) async throws -> ProductImportResult {
         let product = PreviewData.product
@@ -218,10 +160,7 @@ private struct PreviewProductImportService: ProductImportServing {
 }
 
 private struct PreviewProductSearchService: ProductSearchServing {
-    func searchProducts(
-        query: String,
-        homeCurrencyCode: String?
-    ) async throws -> ProductSearchResponse {
+    func searchProducts(query: String) async throws -> ProductSearchResponse {
         ProductSearchResponse(
             products: [PreviewData.product],
             total: 1,
@@ -248,14 +187,12 @@ private struct PreviewCheckoutService: CheckoutServing {
         let total = items.reduce(Decimal.zero) {
             $0 + ($1.lineTotal ?? 0)
         }
-        let currencyCode = items.first?.currencyCode ?? "USD"
-
         return CartCheckoutResult(
             order: PlacedVirtualOrder(
                 id: UUID(),
                 status: .ordered,
                 totalAmount: total,
-                currencyCode: currencyCode,
+                currencyCode: "WCN",
                 estimatedDeliveryAt: Date.now.addingTimeInterval(270)
             ),
             items: items.map {
@@ -264,15 +201,15 @@ private struct PreviewCheckoutService: CheckoutServing {
                     productID: $0.product.id,
                     title: $0.product.title,
                     imageURL: $0.product.imageURL,
-                    currencyCode: $0.currencyCode,
-                    unitPriceAmount: $0.unitPrice ?? 0,
+                    currencyCode: "WCN",
+                    unitPriceAmount: $0.unitCoinPrice ?? 0,
                     quantity: $0.quantity,
                     createdAt: .now
                 )
             },
             balance: Money(
-                amount: max(Decimal(850) - total, 0),
-                currencyCode: currencyCode
+                amount: max(Decimal(1250) - total, 0),
+                currencyCode: "WCN"
             ),
             idempotentReplay: false
         )

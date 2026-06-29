@@ -5,7 +5,6 @@ struct LiveDependencies {
     let client: SupabaseClient
     let authService: SupabaseAuthService
     let walletService: SupabaseWalletService
-    let onboardingService: SupabaseOnboardingService
     let productImportService: SupabaseProductImportService
     let productSearchService: SupabaseProductSearchService
     let ordersService: SupabaseOrdersService
@@ -18,13 +17,18 @@ struct LiveDependencies {
     init(configuration: AppConfiguration) {
         let client = SupabaseClient(
             supabaseURL: configuration.supabaseURL,
-            supabaseKey: configuration.supabasePublishableKey
+            supabaseKey: configuration.supabasePublishableKey,
+            options: SupabaseClientOptions(
+                auth: .init(
+                    emitLocalSessionAsInitialSession: true
+                ),
+                functions: .init(decoder: .supabase)
+            )
         )
 
         self.client = client
         authService = SupabaseAuthService(client: client)
         walletService = SupabaseWalletService(client: client)
-        onboardingService = SupabaseOnboardingService(client: client)
         productImportService = SupabaseProductImportService(client: client)
         productSearchService = SupabaseProductSearchService(client: client)
         ordersService = SupabaseOrdersService(client: client)

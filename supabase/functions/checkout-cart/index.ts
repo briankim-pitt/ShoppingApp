@@ -5,6 +5,7 @@ import { z } from "zod";
 const cartItemSchema = z.object({
   product_id: z.string().uuid(),
   quantity: z.number().int().min(1).max(99),
+  manual_coin_amount: z.number().positive().max(9999999999.99).optional(),
   manual_price_amount: z.number().positive().max(9999999999.99).optional(),
   manual_currency_code: z.string().trim().length(3).toUpperCase().optional(),
 });
@@ -33,10 +34,10 @@ function errorMessage(error: unknown) {
 
 function statusForDatabaseError(message: string) {
   if (message.includes("not found")) return 404;
-  if (message.includes("Insufficient virtual balance")) return 409;
+  if (message.includes("Insufficient WanderCoin balance")) return 409;
   if (
     message.includes("price") ||
-    message.includes("currency") ||
+    message.includes("WanderCoin") ||
     message.includes("quantity") ||
     message.includes("Quantity") ||
     message.includes("Cart") ||

@@ -10,7 +10,10 @@ struct AddFriendsView: View {
             ScrollView {
                 if searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     ContentUnavailableView {
-                        Label("Find Friends", systemImage: "person.badge.plus")
+                        BrandEmptyStateLabel(
+                            title: "Find Friends",
+                            systemImage: "person.badge.plus"
+                        )
                     } description: {
                         Text("Search for someone by username.")
                     }
@@ -21,6 +24,7 @@ struct AddFriendsView: View {
                 }
             }
             .scrollBounceBehavior(.always)
+            .brandPageBackground()
             .searchable(
                 text: $searchText,
                 placement: .navigationBarDrawer(displayMode: .always),

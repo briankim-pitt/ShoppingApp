@@ -15,9 +15,13 @@ struct OrderItemRow: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
 
-                Text(item.totalPriceText)
-                    .font(.subheadline)
-                    .bold()
+                Label {
+                    Text(item.totalPriceText)
+                } icon: {
+                    WanderCoinIcon(size: 15)
+                }
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Color.brandPrimary)
             }
         }
         .padding(.vertical, 4)

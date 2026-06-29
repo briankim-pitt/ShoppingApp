@@ -17,11 +17,13 @@ struct ProductSearchForm: View {
                 systemImage: "magnifyingglass",
                 action: searchAction
             )
+            .buttonStyle(.borderedProminent)
             .disabled(!viewModel.canSearchProducts)
         } header: {
             Text("Product Search")
         } footer: {
-            Text("Searches eBay listings in the marketplace closest to your home currency.")
+            Text("USD listings convert to WanderCoins at a 1:1 rate.")
         }
+        .brandListRow()
     }
 }

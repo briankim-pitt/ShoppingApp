@@ -52,7 +52,7 @@ struct MainTabView: View {
                 )
             }
         }
-        .tint(.primary)
+        .tint(Color.brandPrimary)
     }
 }
 

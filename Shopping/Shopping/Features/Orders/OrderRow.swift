@@ -14,11 +14,16 @@ struct OrderRow: View {
 
                 Label(order.status.title, systemImage: order.status.systemImage)
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.brandPrimary)
 
                 HStack {
-                    Text(order.totalText)
-                        .bold()
+                    Label {
+                        Text(order.totalText)
+                    } icon: {
+                        WanderCoinIcon(size: 15)
+                    }
+                    .fontWeight(.semibold)
+                    .foregroundStyle(Color.brandPrimary)
 
                     Spacer()
 

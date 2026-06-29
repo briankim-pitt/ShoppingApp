@@ -22,11 +22,7 @@ struct VirtualOrderItem: Decodable, Equatable, Identifiable, Sendable {
     }
 
     var totalPriceText: String {
-        guard let currencyCode else {
-            return "Price unavailable"
-        }
-
         let total = unitPriceAmount * Decimal(quantity)
-        return total.formatted(.currency(code: currencyCode).presentation(.narrow))
+        return total.wanderCoinText
     }
 }

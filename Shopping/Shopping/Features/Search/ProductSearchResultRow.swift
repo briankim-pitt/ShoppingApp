@@ -14,11 +14,16 @@ struct ProductSearchResultRow: View {
                     .font(.headline)
                     .lineLimit(3)
 
-                Text(product.priceText)
-                    .font(.subheadline)
-                    .bold()
+                Label {
+                    Text(product.wanderCoinPriceText)
+                } icon: {
+                    WanderCoinIcon(size: 16)
+                }
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                .foregroundStyle(Color.brandPrimary)
 
-                Text(product.sourceDomain)
+                Text("\(product.priceText) · \(product.sourceDomain)")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
@@ -31,6 +36,7 @@ struct ProductSearchResultRow: View {
                 action: addToCart
             )
             .labelStyle(.iconOnly)
+            .tint(Color.brandPrimary)
             .disabled(isInCart)
         }
         .padding(.vertical, 4)

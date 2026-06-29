@@ -6,6 +6,7 @@ const requestSchema = z.object({
   product_id: z.string().uuid(),
   quantity: z.number().int().min(1).max(99).default(1),
   idempotency_key: z.string().uuid(),
+  manual_coin_amount: z.number().positive().max(9999999999.99).optional(),
   manual_price_amount: z.number().positive().max(9999999999.99).optional(),
   manual_currency_code: z.string().trim().length(3).toUpperCase().optional(),
 });
@@ -29,11 +30,10 @@ function errorMessage(error: unknown) {
 
 function statusForDatabaseError(message: string) {
   if (message.includes("not found")) return 404;
-  if (message.includes("Insufficient virtual balance")) return 409;
+  if (message.includes("Insufficient WanderCoin balance")) return 409;
   if (
     message.includes("price") ||
-    message.includes("currency") ||
-    message.includes("home currency") ||
+    message.includes("WanderCoin") ||
     message.includes("Quantity") ||
     message.includes("idempotency")
   ) {
@@ -84,8 +84,10 @@ export default {
       p_product_id: payload.product_id,
       p_quantity: payload.quantity,
       p_idempotency_key: payload.idempotency_key,
-      p_manual_price_amount: payload.manual_price_amount ?? null,
-      p_manual_currency_code: payload.manual_currency_code ?? null,
+      p_manual_price_amount: payload.manual_coin_amount
+        ?? payload.manual_price_amount
+        ?? null,
+      p_manual_currency_code: null,
     });
 
     if (error) {

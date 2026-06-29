@@ -72,8 +72,42 @@ type CachedProduct = {
   image_url: string | null;
   currency_code: string | null;
   price_amount: number | null;
+  wandercoin_price_amount: number | null;
   metadata: Record<string, unknown>;
   last_imported_at: string;
+};
+
+type SavedProduct = {
+  id: string;
+  canonical_url: string;
+  source_domain: string;
+  title: string;
+  description: string | null;
+  image_url: string | null;
+  currency_code: string | null;
+  price_amount: number | null;
+  wandercoin_price_amount: number | null;
+  created_at: string;
+  updated_at: string;
+  last_imported_at: string;
+};
+
+type ProductAdminClient = {
+  from: (table: "products") => {
+    upsert: (
+      rows: CachedProduct[],
+      options: {
+        onConflict: string;
+        ignoreDuplicates: boolean;
+        defaultToNull: boolean;
+      },
+    ) => {
+      select: (columns: string) => Promise<{
+        data: SavedProduct[] | null;
+        error: { message: string } | null;
+      }>;
+    };
+  };
 };
 
 type EbayToken = {
@@ -205,13 +239,17 @@ function cachedProduct(
     return null;
   }
 
+  const currencyCode = normalizedCurrency(item.price);
+  const priceAmount = normalizedPrice(item.price);
+
   return {
     canonical_url: canonicalUrl,
     source_domain: new URL(canonicalUrl).hostname,
     title: item.title.trim(),
     image_url: item.image?.imageUrl ?? null,
-    currency_code: normalizedCurrency(item.price),
-    price_amount: normalizedPrice(item.price),
+    currency_code: currencyCode,
+    price_amount: priceAmount,
+    wandercoin_price_amount: currencyCode === "USD" ? priceAmount : null,
     metadata: {
       provider: "ebay",
       provider_item_id: item.itemId,
@@ -308,7 +346,8 @@ export default {
       });
     }
 
-    const { data, error } = await ctx.supabaseAdmin
+    const admin = ctx.supabaseAdmin as unknown as ProductAdminClient;
+    const { data, error } = await admin
       .from("products")
       .upsert(productRows, {
         onConflict: "canonical_url",
@@ -316,7 +355,7 @@ export default {
         defaultToNull: false,
       })
       .select(
-        "id,canonical_url,source_domain,title,description,image_url,currency_code,price_amount,created_at,updated_at,last_imported_at",
+        "id,canonical_url,source_domain,title,description,image_url,currency_code,price_amount,wandercoin_price_amount,created_at,updated_at,last_imported_at",
       );
 
     if (error) {

@@ -6,7 +6,6 @@ import Observation
 final class AppModel {
     private let authService: any AuthServing
     private let walletService: any WalletServing
-    private let onboardingService: any OnboardingServing
     private let productImportService: any ProductImportServing
     private let productSearchService: any ProductSearchServing
     private let ordersService: any OrdersServing
@@ -20,7 +19,6 @@ final class AppModel {
     init(
         authService: any AuthServing,
         walletService: any WalletServing,
-        onboardingService: any OnboardingServing,
         productImportService: any ProductImportServing,
         productSearchService: any ProductSearchServing,
         ordersService: any OrdersServing,
@@ -29,7 +27,6 @@ final class AppModel {
     ) {
         self.authService = authService
         self.walletService = walletService
-        self.onboardingService = onboardingService
         self.productImportService = productImportService
         self.productSearchService = productSearchService
         self.ordersService = ordersService
@@ -43,7 +40,6 @@ final class AppModel {
             return AppModel(
                 authService: dependencies.authService,
                 walletService: dependencies.walletService,
-                onboardingService: dependencies.onboardingService,
                 productImportService: dependencies.productImportService,
                 productSearchService: dependencies.productSearchService,
                 ordersService: dependencies.ordersService,
@@ -53,7 +49,6 @@ final class AppModel {
             let model = AppModel(
                 authService: UnavailableAuthService(),
                 walletService: UnavailableWalletService(),
-                onboardingService: UnavailableOnboardingService(),
                 productImportService: UnavailableProductImportService(),
                 productSearchService: UnavailableProductSearchService(),
                 ordersService: UnavailableOrdersService(),
@@ -96,24 +91,12 @@ final class AppModel {
         phase = .signedOut
     }
 
-    func listCurrencies() async throws -> [SupportedCurrency] {
-        try await onboardingService.listCurrencies()
-    }
-
-    func selectHomeCurrency(_ currencyCode: String) async throws {
-        wallet = try await onboardingService.setHomeCurrency(currencyCode)
-        phase = .ready
-    }
-
     func importProduct(from url: URL) async throws -> ProductImportResult {
         try await productImportService.importProduct(from: url)
     }
 
     func searchProducts(query: String) async throws -> ProductSearchResponse {
-        try await productSearchService.searchProducts(
-            query: query,
-            homeCurrencyCode: wallet?.balance.currencyCode
-        )
+        try await productSearchService.searchProducts(query: query)
     }
 
     func listOrders() async throws -> [VirtualOrder] {
@@ -141,7 +124,7 @@ final class AppModel {
         do {
             let wallet = try await walletService.getWallet()
             self.wallet = wallet
-            phase = wallet.homeCurrencySelected ? .ready : .needsCurrency
+            phase = .ready
         } catch {
             phase = .signedOut
         }

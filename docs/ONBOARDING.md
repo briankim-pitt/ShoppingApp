@@ -1,47 +1,31 @@
-# Currency Onboarding
+# WanderCoin Wallet Initialization
 
-After sign-in, the app should check the user's private wallet:
+Every profile receives a WanderCoin wallet automatically. New wallets start
+with `1000 WCN`; no currency selection step is required.
 
 `POST /rest/v1/rpc/get_my_wallet`
 
-If `home_currency_selected` is `false`, show the home-currency picker before
-allowing checkout.
+The response retains `home_currency_selected: true` and a `currency_code` of
+`WCN` for compatibility with the current Swift client.
 
-## Load The Picker
+## Compatibility Endpoints
 
-`GET /rest/v1/supported_currencies`
+`GET /rest/v1/supported_currencies` returns one active denomination:
+WanderCoins (`WCN`, symbol `W`).
 
-The response contains active currency codes, display names, symbols, and minor
-units. `minor_unit` tells the app how many decimal places to display. For
-example, USD uses 2 and JPY uses 0.
-
-## Save The Choice
-
-`POST /functions/v1/set-home-currency`
+`POST /functions/v1/set-home-currency` remains available while the existing
+client is migrated, but only accepts:
 
 ```json
 {
-  "currency_code": "JPY"
+  "currency_code": "WCN"
 }
 ```
 
-The endpoint:
-
-1. Verifies the signed-in user.
-2. Checks that the currency is supported and active.
-3. Locks the user's profile row.
-4. Rejects changes after the first virtual purchase.
-5. Updates the wallet currency and records the selection time.
-
-Users may correct the choice before their first purchase. The choice is locked
-afterward so existing orders, ledger entries, and balances stay in one
-consistent currency.
-
-The starting virtual balance remains `1000` in the chosen currency. A future
-onboarding step can let users choose their starting budget separately.
+Other denomination values are rejected.
 
 ## Privacy
 
-Wallet columns are not available through social profile queries. The owner
+Wallet columns remain unavailable through social profile queries. The owner
 reads them through `get_my_wallet()`, which derives the user ID from the
 authenticated session.

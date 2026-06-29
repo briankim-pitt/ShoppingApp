@@ -6,7 +6,8 @@ struct SearchErrorView: View {
     var body: some View {
         Section {
             Label(message, systemImage: "exclamationmark.triangle")
-                .foregroundStyle(.red)
+                .foregroundStyle(Color.brandAccentCoral)
         }
+        .brandListRow()
     }
 }

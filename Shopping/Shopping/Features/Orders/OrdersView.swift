@@ -10,11 +10,15 @@ struct OrdersView: View {
                 if viewModel.isLoading && viewModel.orders.isEmpty {
                     ProgressView()
                         .controlSize(.large)
+                        .tint(Color.brandPrimary)
                 } else if let errorMessage = viewModel.errorMessage,
                           viewModel.orders.isEmpty {
                     ScrollView {
                         ContentUnavailableView {
-                            Label("Couldn't Load Orders", systemImage: "wifi.exclamationmark")
+                            BrandEmptyStateLabel(
+                                title: "Couldn't Load Orders",
+                                systemImage: "wifi.exclamationmark"
+                            )
                         } description: {
                             Text(errorMessage)
                         } actions: {
@@ -23,19 +27,24 @@ struct OrdersView: View {
                         .containerRelativeFrame(.vertical)
                     }
                     .scrollBounceBehavior(.always)
+                    .brandPageBackground()
                     .refreshable {
                         await viewModel.refresh(using: appModel)
                     }
                 } else if viewModel.orders.isEmpty {
                     ScrollView {
                         ContentUnavailableView {
-                            Label("No Orders Yet", systemImage: "shippingbox")
+                            BrandEmptyStateLabel(
+                                title: "No Orders Yet",
+                                systemImage: "shippingbox"
+                            )
                         } description: {
                             Text("Your virtual purchases will appear here.")
                         }
                         .containerRelativeFrame(.vertical)
                     }
                     .scrollBounceBehavior(.always)
+                    .brandPageBackground()
                     .refreshable {
                         await viewModel.refresh(using: appModel)
                     }
@@ -43,7 +52,8 @@ struct OrdersView: View {
                     List {
                         if let errorMessage = viewModel.errorMessage {
                             Label(errorMessage, systemImage: "exclamationmark.triangle")
-                                .foregroundStyle(.red)
+                                .foregroundStyle(Color.brandAccentCoral)
+                                .brandListRow()
                         }
 
                         ForEach(viewModel.orders) { order in
@@ -55,8 +65,10 @@ struct OrdersView: View {
                             } label: {
                                 OrderRow(order: order)
                             }
+                            .brandListRow()
                         }
                     }
+                    .brandPageBackground()
                     .refreshable {
                         await viewModel.refresh(using: appModel)
                     }

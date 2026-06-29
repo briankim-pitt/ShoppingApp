@@ -3,27 +3,22 @@ import Foundation
 struct CartItem: Equatable, Identifiable, Sendable {
     let product: Product
     var quantity: Int
-    var manualPriceAmount: Decimal?
-    var manualCurrencyCode: String?
+    var manualCoinAmount: Decimal?
 
     var id: UUID {
         product.id
     }
 
-    var unitPrice: Decimal? {
-        product.priceAmount ?? manualPriceAmount
-    }
-
-    var currencyCode: String? {
-        product.currencyCode ?? manualCurrencyCode
+    var unitCoinPrice: Decimal? {
+        product.wanderCoinPriceAmount ?? manualCoinAmount
     }
 
     var lineTotal: Decimal? {
-        unitPrice.map { $0 * Decimal(quantity) }
+        unitCoinPrice.map { $0 * Decimal(quantity) }
     }
 
-    func isReady(homeCurrencyCode: String) -> Bool {
-        guard let unitPrice, unitPrice > 0 else { return false }
-        return currencyCode?.uppercased() == homeCurrencyCode.uppercased()
+    var isReady: Bool {
+        guard let unitCoinPrice else { return false }
+        return unitCoinPrice > 0
     }
 }

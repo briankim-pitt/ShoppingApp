@@ -9,6 +9,7 @@ struct Product: Decodable, Equatable, Identifiable, Sendable {
     let imageURL: URL?
     let currencyCode: String?
     let priceAmount: Decimal?
+    let wanderCoinPriceAmount: Decimal?
     let createdAt: Date
     let updatedAt: Date
     let lastImportedAt: Date
@@ -22,6 +23,7 @@ struct Product: Decodable, Equatable, Identifiable, Sendable {
         case imageURL = "image_url"
         case currencyCode = "currency_code"
         case priceAmount = "price_amount"
+        case wanderCoinPriceAmount = "wandercoin_price_amount"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
         case lastImportedAt = "last_imported_at"
@@ -33,5 +35,9 @@ struct Product: Decodable, Equatable, Identifiable, Sendable {
         }
 
         return priceAmount.formatted(.currency(code: currencyCode).presentation(.narrow))
+    }
+
+    var wanderCoinPriceText: String {
+        wanderCoinPriceAmount?.wanderCoinText ?? "Set coin price in cart"
     }
 }

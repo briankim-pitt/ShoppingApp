@@ -17,3 +17,26 @@ Acceptance criteria:
 - Cover success, failure, cancellation, lockout, and unavailable-device states.
 
 Face ID is not part of the current cart and checkout milestone.
+
+## Action notification pills
+Success, failure, notification messages that come up from the bottom of the screen.
+- Liquid glass containers that display action status.
+- Trigger haptic feedback
+- 
+
+## Delete Account endpoint
+
+## Haptic Feedback
+
+## In process purchase status in Home page
+
+## Fix suttering in Cart page: swiping on item to remove
+
+## Discovery feed in Home page
+
+## Product recommendations in Cart page
+
+## Divide Orders by In process and Processed
+
+## Food delivery
+

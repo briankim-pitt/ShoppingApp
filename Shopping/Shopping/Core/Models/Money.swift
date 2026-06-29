@@ -10,6 +10,12 @@ struct Money: Codable, Equatable, Sendable {
     }
 
     var formatted: String {
-        amount.formatted(.currency(code: currencyCode).presentation(.narrow))
+        if currencyCode == "WCN" {
+            return amount.wanderCoinText
+        }
+
+        return amount.formatted(
+            .currency(code: currencyCode).presentation(.narrow)
+        )
     }
 }

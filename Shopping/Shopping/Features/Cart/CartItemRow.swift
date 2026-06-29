@@ -3,27 +3,24 @@ import SwiftUI
 
 struct CartItemRow: View {
     let item: CartItem
-    let homeCurrencyCode: String
     let setQuantity: (Int) -> Void
-    let setManualPrice: (Decimal?) -> Void
+    let setManualCoinPrice: (Decimal?) -> Void
     let remove: () -> Void
 
     @State private var manualPriceText: String
 
     init(
         item: CartItem,
-        homeCurrencyCode: String,
         setQuantity: @escaping (Int) -> Void,
-        setManualPrice: @escaping (Decimal?) -> Void,
+        setManualCoinPrice: @escaping (Decimal?) -> Void,
         remove: @escaping () -> Void
     ) {
         self.item = item
-        self.homeCurrencyCode = homeCurrencyCode
         self.setQuantity = setQuantity
-        self.setManualPrice = setManualPrice
+        self.setManualCoinPrice = setManualCoinPrice
         self.remove = remove
         _manualPriceText = State(
-            initialValue: item.manualPriceAmount.map {
+            initialValue: item.manualCoinAmount.map {
                 NSDecimalNumber(decimal: $0).stringValue
             } ?? ""
         )
@@ -43,20 +40,23 @@ struct CartItemRow: View {
                     "Quantity \(item.quantity)",
                     value: Binding(
                         get: { item.quantity },
-                        set: setQuantity
+                        set: { newValue in
+                            setQuantity(newValue)
+                        }
                     ),
                     in: 1...99
                 )
                 .font(.subheadline)
+                .tint(Color.brandPrimary)
 
-                if let lineTotal = item.lineTotal,
-                   item.currencyCode?.uppercased() == homeCurrencyCode {
-                    Text(
-                        lineTotal.formatted(
-                            .currency(code: homeCurrencyCode).presentation(.narrow)
-                        )
-                    )
+                if let lineTotal = item.lineTotal {
+                    Label {
+                        Text(lineTotal.wanderCoinText)
+                    } icon: {
+                        WanderCoinIcon(size: 16)
+                    }
                     .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Color.brandPrimary)
                 }
             }
         }
@@ -68,42 +68,36 @@ struct CartItemRow: View {
 
     @ViewBuilder
     private var priceContent: some View {
-        if item.product.priceAmount == nil {
+        if item.product.wanderCoinPriceAmount == nil {
             HStack {
-                TextField("Price", text: $manualPriceText)
+                TextField("WanderCoin price", text: $manualPriceText)
                     .keyboardType(.decimalPad)
                     .textFieldStyle(.roundedBorder)
                     .onChange(of: manualPriceText) { _, newValue in
-                        setManualPrice(decimal(from: newValue))
+                        setManualCoinPrice(decimal(from: newValue))
                     }
 
-                Text(homeCurrencyCode)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                WanderCoinIcon(size: 18)
             }
 
-            if item.manualPriceAmount == nil {
-                Text("Enter the product price")
+            if item.manualCoinAmount == nil {
+                Text("Enter a WanderCoin price")
                     .font(.caption)
-                    .foregroundStyle(.red)
+                    .foregroundStyle(Color.brandAccentCoral)
             }
-
-            if let currencyCode = item.product.currencyCode,
-               currencyCode.uppercased() != homeCurrencyCode {
-                Text("Uses \(currencyCode), but your wallet uses \(homeCurrencyCode)")
-                    .font(.caption)
-                    .foregroundStyle(.red)
-            }
-        } else if let currencyCode = item.product.currencyCode,
-                  currencyCode.uppercased() != homeCurrencyCode {
-            Text("Uses \(currencyCode), but your wallet uses \(homeCurrencyCode)")
-                .font(.caption)
-                .foregroundStyle(.red)
         } else {
-            Text(item.product.priceText)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+            Label {
+                Text(item.product.wanderCoinPriceText)
+            } icon: {
+                WanderCoinIcon(size: 16)
+            }
+            .font(.subheadline)
+            .foregroundStyle(Color.brandPrimary)
         }
+
+        Text("Source price: \(item.product.priceText)")
+            .font(.caption)
+            .foregroundStyle(.tertiary)
     }
 
     private func decimal(from text: String) -> Decimal? {

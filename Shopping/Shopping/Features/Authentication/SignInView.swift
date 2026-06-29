@@ -10,6 +10,19 @@ struct SignInView: View {
         NavigationStack {
             Form {
                 Section {
+                    VStack(spacing: 10) {
+                        WanderCartWordmark()
+
+                        Text("Shop the feeling. Keep the money.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                }
+                .listRowBackground(Color.clear)
+
+                Section {
                     Picker("Mode", selection: $viewModel.mode) {
                         ForEach(SignInMode.allCases) { mode in
                             Text(mode.title).tag(mode)
@@ -17,6 +30,7 @@ struct SignInView: View {
                     }
                     .pickerStyle(.segmented)
                 }
+                .brandListRow()
 
                 Section {
                     TextField("Email", text: $viewModel.email)
@@ -29,12 +43,14 @@ struct SignInView: View {
                             viewModel.mode == .signIn ? .password : .newPassword
                         )
                 }
+                .brandListRow()
 
                 if let errorMessage = viewModel.errorMessage {
                     Section {
                         Text(errorMessage)
-                            .foregroundStyle(.red)
+                            .foregroundStyle(Color.brandAccentCoral)
                     }
+                    .brandListRow()
                 }
 
                 Section {
@@ -53,10 +69,14 @@ struct SignInView: View {
                             Spacer()
                         }
                     }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
                     .disabled(!viewModel.canSubmit)
                 }
+                .listRowBackground(Color.clear)
             }
-            .appPageTitle("Shopping")
+            .brandPageBackground()
+            .navigationTitle("")
         }
     }
 }

@@ -71,7 +71,7 @@ struct OrderTrackingStepView: View {
     private var markerStyle: AnyShapeStyle {
         switch state {
         case .completed, .current:
-            AnyShapeStyle(.primary)
+            AnyShapeStyle(Color.brandPrimary)
         case .upcoming:
             AnyShapeStyle(.tertiary)
         }
@@ -79,7 +79,7 @@ struct OrderTrackingStepView: View {
 
     private var connectorStyle: AnyShapeStyle {
         state == .completed
-            ? AnyShapeStyle(.primary)
+            ? AnyShapeStyle(Color.brandPrimary)
             : AnyShapeStyle(.quaternary)
     }
 

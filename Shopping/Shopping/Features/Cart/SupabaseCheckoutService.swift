@@ -15,14 +15,12 @@ struct SupabaseCheckoutService: CheckoutServing {
     private struct CheckoutItemRequest: Encodable {
         let productID: UUID
         let quantity: Int
-        let manualPriceAmount: Decimal?
-        let manualCurrencyCode: String?
+        let manualCoinAmount: Decimal?
 
         enum CodingKeys: String, CodingKey {
             case productID = "product_id"
             case quantity
-            case manualPriceAmount = "manual_price_amount"
-            case manualCurrencyCode = "manual_currency_code"
+            case manualCoinAmount = "manual_coin_amount"
         }
     }
 
@@ -36,11 +34,8 @@ struct SupabaseCheckoutService: CheckoutServing {
             CheckoutItemRequest(
                 productID: $0.product.id,
                 quantity: $0.quantity,
-                manualPriceAmount: $0.product.priceAmount == nil
-                    ? $0.manualPriceAmount
-                    : nil,
-                manualCurrencyCode: $0.product.currencyCode == nil
-                    ? $0.manualCurrencyCode
+                manualCoinAmount: $0.product.wanderCoinPriceAmount == nil
+                    ? $0.manualCoinAmount
                     : nil
             )
         }

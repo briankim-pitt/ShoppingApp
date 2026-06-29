@@ -16,7 +16,7 @@ enum MainTab: CaseIterable, Hashable {
         case .cart:
             "Cart"
         case .search:
-            "Search"
+            "Discover"
         }
     }
 

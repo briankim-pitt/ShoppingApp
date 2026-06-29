@@ -18,8 +18,16 @@ struct ProductImportResultView: View {
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
 
-                    Text(result.product.priceText)
-                        .font(.subheadline.weight(.semibold))
+                    Label {
+                        Text(result.product.wanderCoinPriceText)
+                    } icon: {
+                        WanderCoinIcon(size: 16)
+                    }
+                    .font(.subheadline.weight(.semibold))
+
+                    Text("Source price: \(result.product.priceText)")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
 
                     if let description = result.product.description, !description.isEmpty {
                         Text(description)
@@ -38,5 +46,6 @@ struct ProductImportResultView: View {
             )
             .disabled(isInCart)
         }
+        .brandListRow()
     }
 }

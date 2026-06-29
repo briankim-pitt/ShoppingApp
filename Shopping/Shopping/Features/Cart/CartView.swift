@@ -10,13 +10,17 @@ struct CartView: View {
                 if appModel.cart.isEmpty {
                     ScrollView {
                         ContentUnavailableView {
-                            Label("Your Cart Is Empty", systemImage: "cart")
+                            BrandEmptyStateLabel(
+                                title: "Your Cart Is Empty",
+                                systemImage: "cart"
+                            )
                         } description: {
                             Text("Products you plan to check out will appear here.")
                         }
                         .containerRelativeFrame(.vertical)
                     }
                     .scrollBounceBehavior(.always)
+                    .brandPageBackground()
                 } else {
                     cartContent
                 }
@@ -48,7 +52,7 @@ struct CartView: View {
                 Button("Cancel", role: .cancel) {}
             } message: {
                 if let total {
-                    Text("Your virtual wallet will be charged \(total.formatted).")
+                    Text("Your wallet will be charged \(total.wanderCoinText).")
                 }
             }
             .confirmationDialog(
@@ -64,19 +68,13 @@ struct CartView: View {
         }
     }
 
-    private var homeCurrencyCode: String {
-        appModel.wallet?.balance.currencyCode ?? "USD"
-    }
-
-    private var total: Money? {
-        appModel.cart.total(homeCurrencyCode: homeCurrencyCode).map {
-            Money(amount: $0, currencyCode: homeCurrencyCode)
-        }
+    private var total: Decimal? {
+        appModel.cart.total()
     }
 
     private var canCheckout: Bool {
         guard let total, let wallet = appModel.wallet else { return false }
-        return total.amount <= wallet.balance.amount && !viewModel.isCheckingOut
+        return total <= wallet.balance.amount && !viewModel.isCheckingOut
     }
 
     private var cartContent: some View {
@@ -85,12 +83,11 @@ struct CartView: View {
                 ForEach(appModel.cart.items) { item in
                     CartItemRow(
                         item: item,
-                        homeCurrencyCode: homeCurrencyCode,
                         setQuantity: {
                             appModel.cart.setQuantity($0, for: item.id)
                         },
-                        setManualPrice: {
-                            appModel.cart.setManualPrice($0, for: item.id)
+                        setManualCoinPrice: {
+                            appModel.cart.setManualCoinPrice($0, for: item.id)
                         },
                         remove: {
                             appModel.cart.remove(productID: item.id)
@@ -98,6 +95,7 @@ struct CartView: View {
                     )
                 }
             }
+            .brandListRow()
 
             Section("Summary") {
                 LabeledContent("Wallet") {
@@ -105,31 +103,33 @@ struct CartView: View {
                 }
 
                 LabeledContent("Total") {
-                    Text(total?.formatted ?? "Complete item prices")
+                    Text(total?.wanderCoinText ?? "Complete coin prices")
                 }
 
                 if let total, let wallet = appModel.wallet {
                     LabeledContent("After checkout") {
                         Text(
                             Money(
-                                amount: wallet.balance.amount - total.amount,
-                                currencyCode: homeCurrencyCode
+                                amount: wallet.balance.amount - total,
+                                currencyCode: "WCN"
                             ).formatted
                         )
                     }
                     .foregroundStyle(
-                        total.amount > wallet.balance.amount
-                            ? Color.red
+                        total > wallet.balance.amount
+                            ? Color.brandAccentCoral
                             : Color.primary
                     )
                 }
             }
+            .brandListRow()
 
             if let errorMessage = viewModel.errorMessage {
                 Section {
                     Label(errorMessage, systemImage: "exclamationmark.triangle")
-                        .foregroundStyle(.red)
+                        .foregroundStyle(Color.brandAccentCoral)
                 }
+                .brandListRow()
             }
 
             Section {
@@ -145,10 +145,12 @@ struct CartView: View {
                     }
                 }
                 .buttonStyle(.borderedProminent)
+                .tint(Color.brandPrimary)
                 .disabled(!canCheckout)
             }
             .listRowBackground(Color.clear)
         }
+        .brandPageBackground()
     }
 }
 
