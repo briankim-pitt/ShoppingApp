@@ -1,0 +1,32 @@
+info:
+  name: Search Products
+  type: http
+  seq: 11
+
+http:
+  method: POST
+  url: "{{base_url}}/functions/v1/search-products"
+  headers:
+    - name: apikey
+      value: "{{anon_key}}"
+    - name: Authorization
+      value: Bearer {{access_token}}
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "query": "wireless keyboard",
+        "limit": 20,
+        "marketplace_id": "EBAY_US"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Searches eBay by product or brand name, caches normalized listings in products, and returns Product objects that can be added directly to the cart.

@@ -7,6 +7,7 @@ struct LiveDependencies {
     let walletService: SupabaseWalletService
     let onboardingService: SupabaseOnboardingService
     let productImportService: SupabaseProductImportService
+    let productSearchService: SupabaseProductSearchService
     let ordersService: SupabaseOrdersService
     let checkoutService: SupabaseCheckoutService
 
@@ -25,6 +26,7 @@ struct LiveDependencies {
         walletService = SupabaseWalletService(client: client)
         onboardingService = SupabaseOnboardingService(client: client)
         productImportService = SupabaseProductImportService(client: client)
+        productSearchService = SupabaseProductSearchService(client: client)
         ordersService = SupabaseOrdersService(client: client)
         checkoutService = SupabaseCheckoutService(client: client)
     }

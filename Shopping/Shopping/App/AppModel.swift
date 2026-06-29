@@ -8,6 +8,7 @@ final class AppModel {
     private let walletService: any WalletServing
     private let onboardingService: any OnboardingServing
     private let productImportService: any ProductImportServing
+    private let productSearchService: any ProductSearchServing
     private let ordersService: any OrdersServing
     private let checkoutService: any CheckoutServing
 
@@ -21,6 +22,7 @@ final class AppModel {
         walletService: any WalletServing,
         onboardingService: any OnboardingServing,
         productImportService: any ProductImportServing,
+        productSearchService: any ProductSearchServing,
         ordersService: any OrdersServing,
         checkoutService: any CheckoutServing,
         cart: CartStore = CartStore()
@@ -29,6 +31,7 @@ final class AppModel {
         self.walletService = walletService
         self.onboardingService = onboardingService
         self.productImportService = productImportService
+        self.productSearchService = productSearchService
         self.ordersService = ordersService
         self.checkoutService = checkoutService
         self.cart = cart
@@ -42,6 +45,7 @@ final class AppModel {
                 walletService: dependencies.walletService,
                 onboardingService: dependencies.onboardingService,
                 productImportService: dependencies.productImportService,
+                productSearchService: dependencies.productSearchService,
                 ordersService: dependencies.ordersService,
                 checkoutService: dependencies.checkoutService
             )
@@ -51,6 +55,7 @@ final class AppModel {
                 walletService: UnavailableWalletService(),
                 onboardingService: UnavailableOnboardingService(),
                 productImportService: UnavailableProductImportService(),
+                productSearchService: UnavailableProductSearchService(),
                 ordersService: UnavailableOrdersService(),
                 checkoutService: UnavailableCheckoutService()
             )
@@ -102,6 +107,13 @@ final class AppModel {
 
     func importProduct(from url: URL) async throws -> ProductImportResult {
         try await productImportService.importProduct(from: url)
+    }
+
+    func searchProducts(query: String) async throws -> ProductSearchResponse {
+        try await productSearchService.searchProducts(
+            query: query,
+            homeCurrencyCode: wallet?.balance.currencyCode
+        )
     }
 
     func listOrders() async throws -> [VirtualOrder] {

@@ -108,6 +108,7 @@ enum PreviewData {
             walletService: PreviewWalletService(wallet: nil),
             onboardingService: PreviewOnboardingService(currencies: currencies),
             productImportService: PreviewProductImportService(),
+            productSearchService: PreviewProductSearchService(),
             ordersService: PreviewOrdersService(orders: []),
             checkoutService: PreviewCheckoutService()
         )
@@ -125,6 +126,7 @@ enum PreviewData {
             ),
             onboardingService: PreviewOnboardingService(currencies: currencies),
             productImportService: PreviewProductImportService(),
+            productSearchService: PreviewProductSearchService(),
             ordersService: PreviewOrdersService(orders: []),
             checkoutService: PreviewCheckoutService()
         )
@@ -138,6 +140,7 @@ enum PreviewData {
             walletService: PreviewWalletService(wallet: wallet),
             onboardingService: PreviewOnboardingService(currencies: currencies),
             productImportService: PreviewProductImportService(),
+            productSearchService: PreviewProductSearchService(),
             ordersService: PreviewOrdersService(orders: orders),
             checkoutService: PreviewCheckoutService()
         )
@@ -210,6 +213,21 @@ private struct PreviewProductImportService: ProductImportServing {
                 errorMessage: nil,
                 createdAt: .now
             )
+        )
+    }
+}
+
+private struct PreviewProductSearchService: ProductSearchServing {
+    func searchProducts(
+        query: String,
+        homeCurrencyCode: String?
+    ) async throws -> ProductSearchResponse {
+        ProductSearchResponse(
+            products: [PreviewData.product],
+            total: 1,
+            provider: "ebay",
+            marketplaceID: "EBAY_US",
+            correctedQuery: nil
         )
     }
 }

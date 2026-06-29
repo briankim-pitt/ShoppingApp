@@ -479,3 +479,9 @@ enabled = true
 verify_jwt = false
 import_map = "./functions/respond-friend-request/deno.json"
 entrypoint = "./functions/respond-friend-request/index.ts"
+
+[functions.search-products]
+enabled = true
+verify_jwt = false
+import_map = "./functions/search-products/deno.json"
+entrypoint = "./functions/search-products/index.ts"
