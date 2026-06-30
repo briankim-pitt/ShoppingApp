@@ -5,6 +5,7 @@ import Observation
 @Observable
 final class SearchViewModel {
     var mode: SearchMode = .products
+    var selectedCategory: ProductSearchCategory = .all
     var productQuery = ""
     var products: [Product] = []
     var isSearchingProducts = false
@@ -14,6 +15,7 @@ final class SearchViewModel {
     var isImporting = false
     var result: ProductImportResult?
     var errorMessage: String?
+    private var hasLoadedInitialProducts = false
 
     var canImport: Bool {
         URL(string: trimmedURL) != nil && !isImporting
@@ -48,6 +50,44 @@ final class SearchViewModel {
     func searchProducts(using appModel: AppModel) async {
         guard canSearchProducts else { return }
 
+        await performProductSearch(
+            query: trimmedProductQuery,
+            using: appModel
+        )
+    }
+
+    func searchProducts(
+        in category: ProductSearchCategory,
+        using appModel: AppModel
+    ) async {
+        guard !isSearchingProducts else { return }
+
+        selectedCategory = category
+        await performProductSearch(
+            query: category.searchQuery,
+            using: appModel
+        )
+    }
+
+    func loadInitialProducts(using appModel: AppModel) async {
+        guard !hasLoadedInitialProducts else { return }
+
+        hasLoadedInitialProducts = true
+        await searchProducts(in: .all, using: appModel)
+    }
+
+    var popularProducts: [Product] {
+        Array(products.prefix(6))
+    }
+
+    var recommendedProducts: [Product] {
+        Array(products.dropFirst(6))
+    }
+
+    private func performProductSearch(
+        query: String,
+        using appModel: AppModel
+    ) async {
         isSearchingProducts = true
         hasSearchedProducts = true
         errorMessage = nil
@@ -55,7 +95,7 @@ final class SearchViewModel {
 
         do {
             let response = try await appModel.searchProducts(
-                query: trimmedProductQuery
+                query: query
             )
             products = response.products
             correctedQuery = response.correctedQuery
@@ -65,4 +105,5 @@ final class SearchViewModel {
             errorMessage = error.localizedDescription
         }
     }
+
 }

@@ -3,137 +3,54 @@ import SwiftUI
 struct SearchView: View {
     @Environment(AppModel.self) private var appModel
     @State private var viewModel = SearchViewModel()
+    @State private var showsAllPopular = false
+    @State private var showsAllRecommended = false
 
     var body: some View {
         @Bindable var viewModel = viewModel
 
         NavigationStack {
-            List {
-                Section {
-                    Picker("Search Mode", selection: $viewModel.mode) {
-                        ForEach(SearchMode.allCases) { mode in
-                            Text(mode.title)
-                                .tag(mode)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .labelsHidden()
-                }
-                .listRowBackground(Color.clear)
-
-                if viewModel.mode == .products {
-                    ProductSearchForm(
-                        viewModel: viewModel,
-                        searchAction: searchProducts
-                    )
-
-                    if viewModel.isSearchingProducts {
-                        HStack {
-                            Spacer()
-                            ProgressView()
-                            Spacer()
-                        }
-                        .listRowBackground(Color.clear)
-                    }
-
-                    if let correctedQuery = viewModel.correctedQuery {
-                        Section {
-                            Label(
-                                "Showing results for \(correctedQuery)",
-                                systemImage: "text.magnifyingglass"
+            ZStack(alignment: .top) {
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 24) {
+                        if viewModel.mode == .products {
+                            DiscoverProductsContent(
+                                viewModel: viewModel,
+                                cart: appModel.cart,
+                                showsAllPopular: $showsAllPopular,
+                                showsAllRecommended: $showsAllRecommended,
+                                selectCategory: searchCategory
                             )
-                            .foregroundStyle(.secondary)
+                        } else {
+                            DiscoverURLImportContent(
+                                viewModel: viewModel,
+                                cart: appModel.cart
+                            )
                         }
-                        .brandListRow()
-                    }
 
-                    if viewModel.hasSearchedProducts,
-                       viewModel.products.isEmpty,
-                       viewModel.errorMessage == nil,
-                       !viewModel.isSearchingProducts {
-                        Section {
-                            ContentUnavailableView {
-                                BrandEmptyStateLabel(
-                                    title: "No Results",
-                                    systemImage: "magnifyingglass"
-                                )
-                            } description: {
-                                Text("Try another product or brand.")
-                            }
+                        if let errorMessage = viewModel.errorMessage {
+                            SearchErrorView(message: errorMessage)
                         }
-                        .brandListRow()
                     }
-
-                    if !viewModel.products.isEmpty {
-                        Section("eBay Results") {
-                            ForEach(viewModel.products) { product in
-                                ProductSearchResultRow(
-                                    product: product,
-                                    isInCart: appModel.cart.contains(
-                                        productID: product.id
-                                    ),
-                                    addToCart: {
-                                        appModel.cart.add(product)
-                                    }
-                                )
-                            }
-                        }
-                        .brandListRow()
-                    }
-                } else {
-                    ProductImportForm(
-                        viewModel: viewModel,
-                        importAction: importProduct
-                    )
-
-                    if viewModel.isImporting {
-                        HStack {
-                            Spacer()
-                            ProgressView()
-                            Spacer()
-                        }
-                        .listRowBackground(Color.clear)
-                    }
-
-                    if let result = viewModel.result {
-                        ProductImportResultView(
-                            result: result,
-                            isInCart: appModel.cart.contains(
-                                productID: result.product.id
-                            ),
-                            addToCart: {
-                                appModel.cart.add(result.product)
-                            }
-                        )
-                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 72)
+                    .padding(.bottom, 32)
                 }
+                .scrollBounceBehavior(.always)
+                .scrollDismissesKeyboard(.interactively)
+                .brandPageBackground()
 
-                if let errorMessage = viewModel.errorMessage {
-                    SearchErrorView(message: errorMessage)
-                }
+                DiscoverSearchHeader(
+                    viewModel: viewModel,
+                    searchAction: searchProducts,
+                    importAction: importProduct
+                )
+                .padding(.horizontal)
+                .padding(.top, 8)
             }
-            .brandPageBackground()
             .appPageTitle("Discover")
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    if viewModel.mode == .products {
-                        Button(
-                            "Search",
-                            systemImage: "magnifyingglass",
-                            action: searchProducts
-                        )
-                        .tint(Color.brandPrimary)
-                        .disabled(!viewModel.canSearchProducts)
-                    } else {
-                        Button(
-                            "Import",
-                            systemImage: "square.and.arrow.down",
-                            action: importProduct
-                        )
-                        .tint(Color.brandPrimary)
-                        .disabled(!viewModel.canImport)
-                    }
-                }
+            .task {
+                await viewModel.loadInitialProducts(using: appModel)
             }
         }
     }
@@ -147,6 +64,18 @@ struct SearchView: View {
     private func searchProducts() {
         Task {
             await viewModel.searchProducts(using: appModel)
+        }
+    }
+
+    private func searchCategory(_ category: ProductSearchCategory) {
+        showsAllPopular = false
+        showsAllRecommended = false
+
+        Task {
+            await viewModel.searchProducts(
+                in: category,
+                using: appModel
+            )
         }
     }
 }

@@ -8,6 +8,14 @@ enum PreviewData {
         homeCurrencySelectedAt: .now
     )
 
+    static let dailyCheckInStatus = DailyCheckInStatus(
+        claimedToday: false,
+        rewardAmount: 100,
+        streakCount: 4,
+        claimedAt: nil,
+        balance: wallet.balance
+    )
+
     nonisolated static var product: Product {
         Product(
             id: UUID(uuidString: "231525F8-2C65-4B6F-BAF3-DDAA68958549") ?? UUID(),
@@ -103,6 +111,7 @@ enum PreviewData {
             checkoutService: PreviewCheckoutService()
         )
         model.wallet = wallet
+        model.dailyCheckInStatus = dailyCheckInStatus
         model.phase = .ready
         return model
     }
@@ -135,6 +144,37 @@ private struct PreviewWalletService: WalletServing {
             throw APIError.invalidResponse
         }
         return wallet
+    }
+
+    func getDailyCheckInStatus() async throws -> DailyCheckInStatus {
+        guard let wallet else {
+            throw APIError.invalidResponse
+        }
+
+        return DailyCheckInStatus(
+            claimedToday: false,
+            rewardAmount: 100,
+            streakCount: 4,
+            claimedAt: nil,
+            balance: wallet.balance
+        )
+    }
+
+    func claimDailyCheckIn() async throws -> DailyCheckInStatus {
+        guard let wallet else {
+            throw APIError.invalidResponse
+        }
+
+        return DailyCheckInStatus(
+            claimedToday: true,
+            rewardAmount: 100,
+            streakCount: 5,
+            claimedAt: .now,
+            balance: Money(
+                amount: wallet.balance.amount + 100,
+                currencyCode: "WCN"
+            )
+        )
     }
 }
 

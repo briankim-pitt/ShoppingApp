@@ -221,6 +221,23 @@ function normalizedCurrency(price: EbayPrice | undefined) {
   return currency && /^[A-Z]{3}$/.test(currency) ? currency : null;
 }
 
+function normalizedImageUrl(image: EbayImage | undefined) {
+  const rawUrl = image?.imageUrl?.trim();
+  if (!rawUrl) {
+    return null;
+  }
+
+  try {
+    const url = new URL(rawUrl);
+    if (url.protocol === "http:") {
+      url.protocol = "https:";
+    }
+    return url.protocol === "https:" ? url.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
 function cachedProduct(
   item: EbayItemSummary,
   query: string,
@@ -246,7 +263,7 @@ function cachedProduct(
     canonical_url: canonicalUrl,
     source_domain: new URL(canonicalUrl).hostname,
     title: item.title.trim(),
-    image_url: item.image?.imageUrl ?? null,
+    image_url: normalizedImageUrl(item.image),
     currency_code: currencyCode,
     price_amount: priceAmount,
     wandercoin_price_amount: currencyCode === "USD" ? priceAmount : null,

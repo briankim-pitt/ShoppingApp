@@ -13,6 +13,7 @@ final class AppModel {
 
     var phase: AppPhase = .launching
     var wallet: VirtualWallet?
+    var dailyCheckInStatus: DailyCheckInStatus?
     var selectedTab: MainTab = .home
     let cart: CartStore
 
@@ -87,6 +88,7 @@ final class AppModel {
         try? await authService.signOut()
         cart.clear()
         wallet = nil
+        dailyCheckInStatus = nil
         selectedTab = .home
         phase = .signedOut
     }
@@ -120,10 +122,22 @@ final class AppModel {
         return result
     }
 
+    func claimDailyCheckIn() async throws {
+        let status = try await walletService.claimDailyCheckIn()
+        dailyCheckInStatus = status
+        wallet = VirtualWallet(
+            balance: status.balance,
+            homeCurrencySelected: true,
+            homeCurrencySelectedAt: wallet?.homeCurrencySelectedAt
+        )
+    }
+
     func refreshWallet() async {
         do {
             let wallet = try await walletService.getWallet()
             self.wallet = wallet
+            dailyCheckInStatus = try? await walletService
+                .getDailyCheckInStatus()
             phase = .ready
         } catch {
             phase = .signedOut

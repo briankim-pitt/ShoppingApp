@@ -3,13 +3,20 @@ import SwiftUI
 struct HomeView: View {
     @Environment(AppModel.self) private var appModel
     @State private var orders: [VirtualOrder] = []
+    @State private var isClaimingDailyBonus = false
+    @State private var isShowingCheckInError = false
+    @State private var checkInErrorMessage = ""
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
                     greetingSection
-                    walletCard
+                    DailyCheckInCard(
+                        status: appModel.dailyCheckInStatus,
+                        isClaiming: isClaimingDailyBonus,
+                        claim: claimDailyBonus
+                    )
                     statsSection
                 }
                 .padding(.horizontal, 20)
@@ -45,6 +52,13 @@ struct HomeView: View {
                 await appModel.refreshWallet()
                 await loadOrders()
             }
+            .alert(
+                "Check-in Unavailable",
+                isPresented: $isShowingCheckInError
+            ) {
+            } message: {
+                Text(checkInErrorMessage)
+            }
         }
     }
 
@@ -65,39 +79,6 @@ struct HomeView: View {
             }
             .font(.subheadline)
         }
-    }
-
-    private var walletCard: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            HStack(alignment: .firstTextBaseline) {
-                Text("WanderCoin Wallet")
-                    .font(.headline)
-
-                Spacer()
-
-                Text(walletBalance.wanderCoinText)
-                    .font(.headline)
-            }
-
-            Text("Shop the feeling. Keep the money.")
-                .font(.subheadline)
-                .foregroundStyle(.white.opacity(0.82))
-
-            Button {
-                appModel.selectedTab = .search
-            } label: {
-                Label("Discover", systemImage: "magnifyingglass")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Color.brandPrimary)
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(.white)
-        }
-        .foregroundStyle(.white)
-        .padding(18)
-        .background(Color.brandPrimary, in: .rect(cornerRadius: 18))
-        .accessibilityElement(children: .contain)
     }
 
     private var statsSection: some View {
@@ -167,6 +148,22 @@ struct HomeView: View {
     private func loadOrders() async {
         if let orders = try? await appModel.listOrders() {
             self.orders = orders
+        }
+    }
+
+    private func claimDailyBonus() {
+        guard !isClaimingDailyBonus else { return }
+
+        Task {
+            isClaimingDailyBonus = true
+            defer { isClaimingDailyBonus = false }
+
+            do {
+                try await appModel.claimDailyCheckIn()
+            } catch {
+                checkInErrorMessage = error.localizedDescription
+                isShowingCheckInError = true
+            }
         }
     }
 }

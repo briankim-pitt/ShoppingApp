@@ -4,7 +4,7 @@ struct ProductThumbnail: View {
     let url: URL?
 
     var body: some View {
-        AsyncImage(url: url) { image in
+        AsyncImage(url: url?.upgradingToHTTPS) { image in
             image
                 .resizable()
                 .scaledToFill()
