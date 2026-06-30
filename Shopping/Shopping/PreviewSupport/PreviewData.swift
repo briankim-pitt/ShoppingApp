@@ -27,7 +27,7 @@ enum PreviewData {
             imageURL: URL(string: "https://wooting-website.ams3.cdn.digitaloceanspaces.com/products/keyboards/60HE/60HE_OG.webp"),
             currencyCode: "USD",
             priceAmount: 174.99,
-            wanderCoinPriceAmount: 174.99,
+            wanderCoinPriceAmount: 175,
             createdAt: .now,
             updatedAt: .now,
             lastImportedAt: .now

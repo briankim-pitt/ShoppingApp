@@ -266,7 +266,9 @@ function cachedProduct(
     image_url: normalizedImageUrl(item.image),
     currency_code: currencyCode,
     price_amount: priceAmount,
-    wandercoin_price_amount: currencyCode === "USD" ? priceAmount : null,
+    wandercoin_price_amount: currencyCode === "USD" && priceAmount !== null
+      ? Math.ceil(priceAmount)
+      : null,
     metadata: {
       provider: "ebay",
       provider_item_id: item.itemId,

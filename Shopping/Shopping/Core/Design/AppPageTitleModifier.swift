@@ -126,9 +126,16 @@ struct BrandEmptyStateLabel: View {
 }
 
 extension Decimal {
+    var roundedUpToWholeCoin: Decimal {
+        var source = self
+        var result = Decimal.zero
+        NSDecimalRound(&result, &source, 0, .up)
+        return result
+    }
+
     var wanderCoinNumber: String {
         formatted(
-            .number.precision(.fractionLength(0...2))
+            .number.precision(.fractionLength(0))
         )
     }
 

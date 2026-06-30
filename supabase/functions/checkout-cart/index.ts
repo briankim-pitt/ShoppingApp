@@ -5,8 +5,8 @@ import { z } from "zod";
 const cartItemSchema = z.object({
   product_id: z.string().uuid(),
   quantity: z.number().int().min(1).max(99),
-  manual_coin_amount: z.number().positive().max(9999999999.99).optional(),
-  manual_price_amount: z.number().positive().max(9999999999.99).optional(),
+  manual_coin_amount: z.number().int().positive().max(9999999999).optional(),
+  manual_price_amount: z.number().int().positive().max(9999999999).optional(),
   manual_currency_code: z.string().trim().length(3).toUpperCase().optional(),
 });
 

@@ -71,7 +71,7 @@ struct CartItemRow: View {
         if item.product.wanderCoinPriceAmount == nil {
             HStack {
                 TextField("WanderCoin price", text: $manualPriceText)
-                    .keyboardType(.decimalPad)
+                    .keyboardType(.numberPad)
                     .textFieldStyle(.roundedBorder)
                     .onChange(of: manualPriceText) { _, newValue in
                         setManualCoinPrice(decimal(from: newValue))

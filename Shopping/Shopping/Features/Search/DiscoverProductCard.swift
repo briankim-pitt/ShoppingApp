@@ -7,24 +7,40 @@ struct DiscoverProductCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            ZStack(alignment: .topTrailing) {
+            ZStack {
+                Color.brandPurpleSurface
+
                 AsyncImage(url: product.imageURL?.upgradingToHTTPS) { image in
                     image
                         .resizable()
-                        .scaledToFit()
+                        .scaledToFill()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } placeholder: {
                     Image(systemName: "bag")
                         .font(.largeTitle)
                         .foregroundStyle(.secondary)
                 }
-                .frame(maxWidth: .infinity)
-                .aspectRatio(1, contentMode: .fit)
-                .padding(12)
-                .background(
-                    Color.brandPurpleSurface,
-                    in: .rect(cornerRadius: 14)
-                )
-                .accessibilityHidden(true)
+            }
+            .frame(maxWidth: .infinity)
+            .aspectRatio(1, contentMode: .fit)
+            .clipShape(.rect(cornerRadius: 14))
+            .accessibilityHidden(true)
+
+            Text(product.title)
+                .font(.subheadline)
+                .lineLimit(2)
+
+            HStack(spacing: 8) {
+                Label {
+                    Text(product.wanderCoinPriceText)
+                } icon: {
+                    WanderCoinIcon(size: 16)
+                }
+                .font(.subheadline)
+                .bold()
+                .foregroundStyle(Color.brandPrimary)
+
+                Spacer(minLength: 0)
 
                 Button(
                     isInCart ? "Added to Cart" : "Add to Cart",
@@ -36,21 +52,7 @@ struct DiscoverProductCard: View {
                 .background(.regularMaterial, in: .circle)
                 .tint(Color.brandPrimary)
                 .disabled(isInCart)
-                .padding(6)
             }
-
-            Text(product.title)
-                .font(.subheadline)
-                .lineLimit(2)
-
-            Label {
-                Text(product.wanderCoinPriceText)
-            } icon: {
-                WanderCoinIcon(size: 16)
-            }
-            .font(.subheadline)
-            .bold()
-            .foregroundStyle(Color.brandPrimary)
         }
         .accessibilityElement(children: .contain)
     }

@@ -35,7 +35,7 @@ struct SupabaseCheckoutService: CheckoutServing {
                 productID: $0.product.id,
                 quantity: $0.quantity,
                 manualCoinAmount: $0.product.wanderCoinPriceAmount == nil
-                    ? $0.manualCoinAmount
+                    ? $0.manualCoinAmount?.roundedUpToWholeCoin
                     : nil
             )
         }

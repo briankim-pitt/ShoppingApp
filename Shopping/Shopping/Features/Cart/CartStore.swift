@@ -46,7 +46,7 @@ final class CartStore {
         guard let index = items.firstIndex(where: { $0.id == productID }) else {
             return
         }
-        items[index].manualCoinAmount = price
+        items[index].manualCoinAmount = price?.roundedUpToWholeCoin
         recordMutation()
     }
 

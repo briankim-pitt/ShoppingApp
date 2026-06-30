@@ -457,8 +457,9 @@ export default {
           image_url: metadata.imageUrl,
           currency_code: metadata.currencyCode,
           price_amount: metadata.priceAmount,
-          wandercoin_price_amount: metadata.currencyCode === "USD"
-            ? metadata.priceAmount
+          wandercoin_price_amount: metadata.currencyCode === "USD" &&
+              metadata.priceAmount !== null
+            ? Math.ceil(metadata.priceAmount)
             : null,
           metadata: metadata.rawPayload,
           last_imported_at: new Date().toISOString(),

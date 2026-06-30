@@ -11,4 +11,17 @@ struct MoneyTests {
         #expect(money.amount == 1000)
         #expect(money.currencyCode == "JPY")
     }
+
+    @Test
+    func wanderCoinValuesDisplayWithoutDecimals() {
+        #expect(Decimal(string: "174.99")?.wanderCoinNumber == "175")
+        #expect(Decimal(string: "175.00")?.wanderCoinNumber == "175")
+    }
+
+    @Test
+    func productPricesRoundUpToWholeCoins() {
+        #expect(
+            Decimal(string: "174.01")?.roundedUpToWholeCoin == 175
+        )
+    }
 }

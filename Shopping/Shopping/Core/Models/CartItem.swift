@@ -10,7 +10,8 @@ struct CartItem: Equatable, Identifiable, Sendable {
     }
 
     var unitCoinPrice: Decimal? {
-        product.wanderCoinPriceAmount ?? manualCoinAmount
+        (product.wanderCoinPriceAmount ?? manualCoinAmount)?
+            .roundedUpToWholeCoin
     }
 
     var lineTotal: Decimal? {
