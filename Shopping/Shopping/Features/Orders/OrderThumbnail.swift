@@ -13,9 +13,9 @@ struct OrderThumbnail: View {
                 .font(.title2)
                 .foregroundStyle(.secondary)
         }
-        .frame(width: 64, height: 64)
+        .frame(width: 76, height: 76)
         .background(.thinMaterial)
-        .clipShape(.rect(cornerRadius: 8))
+        .clipShape(.rect(cornerRadius: 12))
         .accessibilityHidden(true)
     }
 }

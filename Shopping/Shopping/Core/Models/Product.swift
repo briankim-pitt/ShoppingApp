@@ -1,6 +1,6 @@
 import Foundation
 
-struct Product: Decodable, Equatable, Identifiable, Sendable {
+struct Product: Decodable, Equatable, Hashable, Identifiable, Sendable {
     let id: UUID
     let canonicalURL: URL
     let sourceDomain: String

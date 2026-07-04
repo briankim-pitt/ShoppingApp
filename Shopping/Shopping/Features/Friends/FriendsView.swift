@@ -11,15 +11,16 @@ struct FriendsView: View {
             ZStack(alignment: .top) {
                 ScrollView {
                     if searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                        ContentUnavailableView {
-                            BrandEmptyStateLabel(
-                                title: "No Friends Yet",
-                                systemImage: "person.2"
-                            )
-                        } description: {
-                            Text("Friends and their activity will appear here.")
-                        }
+                        BrandedActionEmptyState(
+                            imageName: "friend.symbols",
+                            title: "No Friends Yet",
+                            description: "Add friends to see what they’re shopping for—without actually buying.",
+                            actionTitle: "Add Friends",
+                            actionSystemImage: "person.badge.plus",
+                            action: showAddFriends
+                        )
                         .containerRelativeFrame(.vertical)
+                        .padding(.top, 44)
                     } else {
                         ContentUnavailableView.search
                             .containerRelativeFrame(.vertical)

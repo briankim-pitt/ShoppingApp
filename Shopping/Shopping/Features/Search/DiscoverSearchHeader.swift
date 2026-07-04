@@ -33,9 +33,8 @@ struct DiscoverSearchHeader: View {
                 .labelStyle(.iconOnly)
                 .frame(width: 32, height: 32)
             }
-            .buttonStyle(.borderedProminent)
+            .buttonStyle(.glass)
             .buttonBorderShape(.circle)
-            .tint(Color.brandPrimary)
         }
     }
 

@@ -5,6 +5,7 @@ struct SearchView: View {
     @State private var viewModel = SearchViewModel()
     @State private var showsAllPopular = false
     @State private var showsAllRecommended = false
+    @Namespace private var productTransition
 
     var body: some View {
         @Bindable var viewModel = viewModel
@@ -16,15 +17,15 @@ struct SearchView: View {
                         if viewModel.mode == .products {
                             DiscoverProductsContent(
                                 viewModel: viewModel,
-                                cart: appModel.cart,
                                 showsAllPopular: $showsAllPopular,
                                 showsAllRecommended: $showsAllRecommended,
+                                transitionNamespace: productTransition,
                                 selectCategory: searchCategory
                             )
                         } else {
                             DiscoverURLImportContent(
                                 viewModel: viewModel,
-                                cart: appModel.cart
+                                transitionNamespace: productTransition
                             )
                         }
 
@@ -49,6 +50,17 @@ struct SearchView: View {
                 .padding(.top, 8)
             }
             .appPageTitle("Discover")
+            .navigationDestination(for: Product.self) { product in
+                ProductDetailView(
+                    product: product
+                )
+                .navigationTransition(
+                    .zoom(
+                        sourceID: product.id,
+                        in: productTransition
+                    )
+                )
+            }
             .task {
                 await viewModel.loadInitialProducts(using: appModel)
             }

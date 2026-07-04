@@ -3,17 +3,28 @@ import SwiftUI
 struct OrdersView: View {
     @Environment(AppModel.self) private var appModel
     @State private var viewModel = OrdersViewModel()
+    @State private var selectedFilter = OrderListFilter.all
 
     var body: some View {
         NavigationStack {
-            Group {
-                if viewModel.isLoading && viewModel.orders.isEmpty {
-                    ProgressView()
-                        .controlSize(.large)
-                        .tint(Color.brandPrimary)
-                } else if let errorMessage = viewModel.errorMessage,
-                          viewModel.orders.isEmpty {
-                    ScrollView {
+            ScrollView {
+                LazyVStack(spacing: 16) {
+                    Picker("Order filter", selection: $selectedFilter) {
+                        ForEach(OrderListFilter.allCases) { filter in
+                            Text(filter.title)
+                                .tag(filter)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .tint(Color.brandPrimary)
+
+                    if viewModel.isLoading && viewModel.orders.isEmpty {
+                        ProgressView()
+                            .controlSize(.large)
+                            .tint(Color.brandPrimary)
+                            .containerRelativeFrame(.vertical)
+                    } else if let errorMessage = viewModel.errorMessage,
+                              viewModel.orders.isEmpty {
                         ContentUnavailableView {
                             BrandEmptyStateLabel(
                                 title: "Couldn't Load Orders",
@@ -22,17 +33,16 @@ struct OrdersView: View {
                         } description: {
                             Text(errorMessage)
                         } actions: {
-                            Button("Try Again", systemImage: "arrow.clockwise", action: retry)
+                            Button(
+                                "Try Again",
+                                systemImage: "arrow.clockwise",
+                                action: retry
+                            )
+                            .buttonStyle(.glassProminent)
+                            .tint(Color.brandPrimary)
                         }
                         .containerRelativeFrame(.vertical)
-                    }
-                    .scrollBounceBehavior(.always)
-                    .brandPageBackground()
-                    .refreshable {
-                        await viewModel.refresh(using: appModel)
-                    }
-                } else if viewModel.orders.isEmpty {
-                    ScrollView {
+                    } else if viewModel.orders.isEmpty {
                         ContentUnavailableView {
                             BrandEmptyStateLabel(
                                 title: "No Orders Yet",
@@ -42,21 +52,26 @@ struct OrdersView: View {
                             Text("Your virtual purchases will appear here.")
                         }
                         .containerRelativeFrame(.vertical)
-                    }
-                    .scrollBounceBehavior(.always)
-                    .brandPageBackground()
-                    .refreshable {
-                        await viewModel.refresh(using: appModel)
-                    }
-                } else {
-                    List {
+                    } else if filteredOrders.isEmpty {
+                        ContentUnavailableView {
+                            BrandEmptyStateLabel(
+                                title: "No Past Orders",
+                                systemImage: "clock"
+                            )
+                        } description: {
+                            Text("Completed and cancelled orders will appear here.")
+                        }
+                        .containerRelativeFrame(.vertical)
+                    } else {
                         if let errorMessage = viewModel.errorMessage {
-                            Label(errorMessage, systemImage: "exclamationmark.triangle")
-                                .foregroundStyle(Color.brandAccentCoral)
-                                .brandListRow()
+                            Label(
+                                errorMessage,
+                                systemImage: "exclamationmark.triangle"
+                            )
+                            .foregroundStyle(Color.brandAccentCoral)
                         }
 
-                        ForEach(viewModel.orders) { order in
+                        ForEach(filteredOrders) { order in
                             NavigationLink {
                                 OrderDetailView(
                                     orderID: order.id,
@@ -65,19 +80,28 @@ struct OrdersView: View {
                             } label: {
                                 OrderRow(order: order)
                             }
-                            .brandListRow()
+                            .buttonStyle(.plain)
                         }
                     }
-                    .brandPageBackground()
-                    .refreshable {
-                        await viewModel.refresh(using: appModel)
-                    }
                 }
+                .padding(.horizontal)
+                .padding(.bottom, 32)
+            }
+            .scrollBounceBehavior(.always)
+            .brandPageBackground()
+            .refreshable {
+                await viewModel.refresh(using: appModel)
             }
             .appPageTitle("Orders")
             .task {
                 await viewModel.observe(using: appModel)
             }
+        }
+    }
+
+    private var filteredOrders: [VirtualOrder] {
+        viewModel.orders.filter {
+            selectedFilter.includes($0.status)
         }
     }
 

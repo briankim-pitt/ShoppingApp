@@ -97,7 +97,8 @@ enum PreviewData {
             productImportService: PreviewProductImportService(),
             productSearchService: PreviewProductSearchService(),
             ordersService: PreviewOrdersService(orders: []),
-            checkoutService: PreviewCheckoutService()
+            checkoutService: PreviewCheckoutService(),
+            wishlistService: PreviewWishlistService()
         )
     }
 
@@ -108,7 +109,8 @@ enum PreviewData {
             productImportService: PreviewProductImportService(),
             productSearchService: PreviewProductSearchService(),
             ordersService: PreviewOrdersService(orders: orders),
-            checkoutService: PreviewCheckoutService()
+            checkoutService: PreviewCheckoutService(),
+            wishlistService: PreviewWishlistService()
         )
         model.wallet = wallet
         model.dailyCheckInStatus = dailyCheckInStatus
@@ -254,4 +256,12 @@ private struct PreviewCheckoutService: CheckoutServing {
             idempotentReplay: false
         )
     }
+}
+
+private struct PreviewWishlistService: WishlistServing {
+    func contains(productID: UUID) async throws -> Bool {
+        false
+    }
+
+    func add(productID: UUID) async throws {}
 }

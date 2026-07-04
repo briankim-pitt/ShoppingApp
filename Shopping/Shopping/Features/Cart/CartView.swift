@@ -9,14 +9,14 @@ struct CartView: View {
             Group {
                 if appModel.cart.isEmpty {
                     ScrollView {
-                        ContentUnavailableView {
-                            BrandEmptyStateLabel(
-                                title: "Your Cart Is Empty",
-                                systemImage: "cart"
-                            )
-                        } description: {
-                            Text("Products you plan to check out will appear here.")
-                        }
+                        BrandedActionEmptyState(
+                            imageName: "cart.symbols",
+                            title: "Your Cart Is Empty",
+                            description: "Looks like you haven’t added anything yet. Find something you love—without buying.",
+                            actionTitle: "Discover Products",
+                            actionSystemImage: "magnifyingglass",
+                            action: showDiscover
+                        )
                         .containerRelativeFrame(.vertical)
                     }
                     .scrollBounceBehavior(.always)
@@ -75,6 +75,10 @@ struct CartView: View {
     private var canCheckout: Bool {
         guard let total, let wallet = appModel.wallet else { return false }
         return total <= wallet.balance.amount && !viewModel.isCheckingOut
+    }
+
+    private func showDiscover() {
+        appModel.selectedTab = .search
     }
 
     private var cartContent: some View {

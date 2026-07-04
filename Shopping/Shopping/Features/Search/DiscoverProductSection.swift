@@ -5,7 +5,7 @@ struct DiscoverProductSection: View {
     let products: [Product]
     let collapsedCount: Int
     @Binding var showsAll: Bool
-    let cart: CartStore
+    let transitionNamespace: Namespace.ID
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -34,13 +34,13 @@ struct DiscoverProductSection: View {
                 spacing: 20
             ) {
                 ForEach(visibleProducts) { product in
-                    DiscoverProductCard(
-                        product: product,
-                        isInCart: cart.contains(productID: product.id),
-                        addToCart: {
-                            cart.add(product)
-                        }
-                    )
+                    NavigationLink(value: product) {
+                        DiscoverProductCard(
+                            product: product,
+                            transitionNamespace: transitionNamespace
+                        )
+                    }
+                    .buttonStyle(.plain)
                 }
             }
         }

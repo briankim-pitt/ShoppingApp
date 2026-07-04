@@ -2,7 +2,7 @@ import SwiftUI
 
 struct DiscoverURLImportContent: View {
     @Bindable var viewModel: SearchViewModel
-    let cart: CartStore
+    let transitionNamespace: Namespace.ID
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -22,13 +22,13 @@ struct DiscoverURLImportContent: View {
             }
 
             if let result = viewModel.result {
-                DiscoverProductCard(
-                    product: result.product,
-                    isInCart: cart.contains(productID: result.product.id),
-                    addToCart: {
-                        cart.add(result.product)
-                    }
-                )
+                NavigationLink(value: result.product) {
+                    DiscoverProductCard(
+                        product: result.product,
+                        transitionNamespace: transitionNamespace
+                    )
+                }
+                .buttonStyle(.plain)
                 .frame(maxWidth: 220)
             }
         }

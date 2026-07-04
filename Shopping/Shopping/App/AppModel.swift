@@ -10,6 +10,7 @@ final class AppModel {
     private let productSearchService: any ProductSearchServing
     private let ordersService: any OrdersServing
     private let checkoutService: any CheckoutServing
+    private let wishlistService: any WishlistServing
 
     var phase: AppPhase = .launching
     var wallet: VirtualWallet?
@@ -24,6 +25,7 @@ final class AppModel {
         productSearchService: any ProductSearchServing,
         ordersService: any OrdersServing,
         checkoutService: any CheckoutServing,
+        wishlistService: any WishlistServing,
         cart: CartStore = CartStore()
     ) {
         self.authService = authService
@@ -32,6 +34,7 @@ final class AppModel {
         self.productSearchService = productSearchService
         self.ordersService = ordersService
         self.checkoutService = checkoutService
+        self.wishlistService = wishlistService
         self.cart = cart
     }
 
@@ -44,7 +47,8 @@ final class AppModel {
                 productImportService: dependencies.productImportService,
                 productSearchService: dependencies.productSearchService,
                 ordersService: dependencies.ordersService,
-                checkoutService: dependencies.checkoutService
+                checkoutService: dependencies.checkoutService,
+                wishlistService: dependencies.wishlistService
             )
         } catch {
             let model = AppModel(
@@ -53,7 +57,8 @@ final class AppModel {
                 productImportService: UnavailableProductImportService(),
                 productSearchService: UnavailableProductSearchService(),
                 ordersService: UnavailableOrdersService(),
-                checkoutService: UnavailableCheckoutService()
+                checkoutService: UnavailableCheckoutService(),
+                wishlistService: UnavailableWishlistService()
             )
             model.phase = .configurationError(error.localizedDescription)
             return model
@@ -103,6 +108,14 @@ final class AppModel {
 
     func listOrders() async throws -> [VirtualOrder] {
         try await ordersService.listOrders()
+    }
+
+    func isInWishlist(productID: UUID) async throws -> Bool {
+        try await wishlistService.contains(productID: productID)
+    }
+
+    func addToWishlist(productID: UUID) async throws {
+        try await wishlistService.add(productID: productID)
     }
 
     func checkoutCart(idempotencyKey: UUID) async throws -> CartCheckoutResult {

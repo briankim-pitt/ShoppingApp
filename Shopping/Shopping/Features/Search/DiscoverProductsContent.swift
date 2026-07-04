@@ -2,9 +2,9 @@ import SwiftUI
 
 struct DiscoverProductsContent: View {
     @Bindable var viewModel: SearchViewModel
-    let cart: CartStore
     @Binding var showsAllPopular: Bool
     @Binding var showsAllRecommended: Bool
+    let transitionNamespace: Namespace.ID
     let selectCategory: (ProductSearchCategory) -> Void
 
     var body: some View {
@@ -51,7 +51,7 @@ struct DiscoverProductsContent: View {
                 products: viewModel.popularProducts,
                 collapsedCount: 2,
                 showsAll: $showsAllPopular,
-                cart: cart
+                transitionNamespace: transitionNamespace
             )
         }
 
@@ -61,7 +61,7 @@ struct DiscoverProductsContent: View {
                 products: viewModel.recommendedProducts,
                 collapsedCount: 4,
                 showsAll: $showsAllRecommended,
-                cart: cart
+                transitionNamespace: transitionNamespace
             )
         }
     }
