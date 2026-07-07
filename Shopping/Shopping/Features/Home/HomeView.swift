@@ -6,6 +6,11 @@ struct HomeView: View {
     @State private var isClaimingDailyBonus = false
     @State private var isShowingCheckInError = false
     @State private var checkInErrorMessage = ""
+    @State private var isShowingSettings = false
+
+    private var recentOrders: [VirtualOrder] {
+        Array(orders.prefix(3))
+    }
 
     var body: some View {
         NavigationStack {
@@ -18,6 +23,10 @@ struct HomeView: View {
                         claim: claimDailyBonus
                     )
                     statsSection
+
+                    if !recentOrders.isEmpty {
+                        recentOrdersSection
+                    }
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 12)
@@ -34,16 +43,14 @@ struct HomeView: View {
                 .sharedBackgroundVisibility(.hidden)
 
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button(
-                        "Sign Out",
-                        systemImage: "rectangle.portrait.and.arrow.right"
-                    ) {
-                        Task {
-                            await appModel.signOut()
-                        }
+                    Button("Settings", systemImage: "gearshape") {
+                        isShowingSettings = true
                     }
                     .labelStyle(.iconOnly)
                 }
+            }
+            .sheet(isPresented: $isShowingSettings) {
+                SettingsView()
             }
             .task {
                 await loadOrders()
@@ -118,6 +125,32 @@ struct HomeView: View {
                     value: coinsSpent.wanderCoinNumber,
                     showsCoin: true
                 )
+            }
+        }
+    }
+
+    private var recentOrdersSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Recent Orders")
+                    .font(.headline)
+
+                Spacer()
+
+                Button("See All") {
+                    appModel.selectedTab = .orders
+                }
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Color.brandPrimary)
+            }
+
+            ForEach(recentOrders) { order in
+                Button {
+                    appModel.selectedTab = .orders
+                } label: {
+                    OrderRow(order: order)
+                }
+                .buttonStyle(.plain)
             }
         }
     }

@@ -21,6 +21,15 @@ struct PendingProductImportTests {
     }
 
     @Test
+    func parsesSchemelessProductURL() throws {
+        let pending = try #require(try pendingImport(
+            fromDeepLink: "shopping://import-product?url=example.com%2Fitem"
+        ))
+
+        #expect(pending.url.absoluteString == "https://example.com/item")
+    }
+
+    @Test
     func parsesExtractedMetadata() throws {
         let pending = try #require(try pendingImport(
             fromDeepLink: "shopping://import-product?url=https%3A%2F%2Fexample.com%2Fitem&title=Air%20Force%201&price=101.99&currency=usd&brand=Nike&image=https%3A%2F%2Fexample.com%2Fa.jpg"
@@ -33,6 +42,18 @@ struct PendingProductImportTests {
         #expect(extracted.brand == "Nike")
         #expect(extracted.imageURL?.absoluteString == "https://example.com/a.jpg")
         #expect(extracted.description == nil)
+    }
+
+    @Test
+    func parsesProtocolRelativeExtractedImage() throws {
+        let pending = try #require(try pendingImport(
+            fromDeepLink: "shopping://import-product?url=https%3A%2F%2Fexample.com%2Fitem&title=Item&image=%2F%2Fcdn.example.com%2Fa.jpg"
+        ))
+
+        #expect(
+            pending.extracted?.imageURL?.absoluteString
+                == "https://cdn.example.com/a.jpg"
+        )
     }
 
     @Test

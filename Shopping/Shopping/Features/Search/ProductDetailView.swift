@@ -6,33 +6,25 @@ struct ProductDetailView: View {
     @State private var isSavingToWishlist = false
     @State private var wishlistErrorMessage = ""
     @State private var isShowingWishlistError = false
+    @State private var containerSize: CGSize = .zero
 
     let product: Product
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                ProductDetailHeroImage(url: product.imageURL)
+                ProductDetailHeroImage(
+                    url: product.imageURL,
+                    title: product.title,
+                    eyebrow: (product.brand ?? product.sourceDomain)
+                        .uppercased(),
+                    subtitle: nil,
+                    containerSize: containerSize
+                )
 
                 VStack(alignment: .leading, spacing: 20) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(product.title)
-                            .font(.title2)
-                            .bold()
-
-                        Text(product.sourceDomain)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-
-                    Text("Source price: \(product.priceText)")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-
                     if let description = product.description,
                        !description.isEmpty {
-                        Divider()
-
                         Text("About this product")
                             .font(.headline)
 
@@ -51,6 +43,12 @@ struct ProductDetailView: View {
                 .padding()
                 .padding(.bottom, 96)
             }
+            .frame(maxWidth: containerSize.width > 0 ? containerSize.width : nil)
+        }
+        .onGeometryChange(for: CGSize.self) { proxy in
+            proxy.size
+        } action: { size in
+            containerSize = size
         }
         .ignoresSafeArea(edges: .top)
         .brandPageBackground()

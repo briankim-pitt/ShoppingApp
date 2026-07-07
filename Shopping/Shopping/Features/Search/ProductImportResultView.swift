@@ -25,10 +25,6 @@ struct ProductImportResultView: View {
                     }
                     .font(.subheadline.weight(.semibold))
 
-                    Text("Source price: \(result.product.priceText)")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-
                     if let description = result.product.description, !description.isEmpty {
                         Text(description)
                             .font(.footnote)

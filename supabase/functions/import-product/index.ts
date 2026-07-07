@@ -7,14 +7,14 @@ import { z } from "npm:zod@4.4.3";
 const extractedSchema = z.object({
   title: z.string().trim().min(1).max(300),
   description: z.string().trim().min(1).max(1000).nullish(),
-  image_url: z.string().url().max(2000).nullish(),
+  image_url: z.string().trim().max(2000).nullish(),
   price_amount: z.number().nonnegative().finite().nullish(),
   currency_code: z.string().trim().length(3).nullish(),
   brand: z.string().trim().min(1).max(120).nullish(),
 });
 
 const requestSchema = z.object({
-  url: z.string().url(),
+  url: z.string().trim().min(1).max(2000),
   extracted: extractedSchema.optional(),
 });
 
@@ -250,7 +250,26 @@ function collectJsonLdObjects(value: unknown, objects: Record<string, unknown>[]
   return objects;
 }
 
-function extractJsonLdOffer($: cheerio.CheerioAPI) {
+function jsonLdImageUrl(value: unknown) {
+  const image = Array.isArray(value) ? value[0] : value;
+  if (typeof image === "string") {
+    return image;
+  }
+
+  const record = asRecord(image);
+  return stringValue(record?.url) ?? stringValue(record?.contentUrl);
+}
+
+function jsonLdBrandName(value: unknown) {
+  if (typeof value === "string") {
+    return value;
+  }
+
+  const record = asRecord(value);
+  return stringValue(record?.name);
+}
+
+function extractJsonLdProduct($: cheerio.CheerioAPI) {
   const objects: Record<string, unknown>[] = [];
 
   $('script[type="application/ld+json"]').each((_, element) => {
@@ -267,6 +286,10 @@ function extractJsonLdOffer($: cheerio.CheerioAPI) {
   });
 
   const products = objects.filter((object) => hasJsonLdType(object["@type"], "Product"));
+  const product = products[0];
+  const imageUrl = product ? jsonLdImageUrl(product.image) : null;
+  const brand = product ? jsonLdBrandName(product.brand) : null;
+
   for (const product of products) {
     const offers = Array.isArray(product.offers) ? product.offers : [product.offers];
     for (const rawOffer of offers) {
@@ -286,12 +309,12 @@ function extractJsonLdOffer($: cheerio.CheerioAPI) {
         stringValue(priceSpecification?.priceCurrency),
       );
       if (price) {
-        return { price, currency };
+        return { price, currency, imageUrl, brand };
       }
     }
   }
 
-  return { price: null, currency: null };
+  return { price: null, currency: null, imageUrl, brand };
 }
 
 function inferCurrencyCode(rawPrice: string | null, sourceUrl: string) {
@@ -320,7 +343,7 @@ function inferCurrencyCode(rawPrice: string | null, sourceUrl: string) {
 
 function extractMetadata(html: string, sourceUrl: string) {
   const $ = cheerio.load(html);
-  const jsonLdOffer = extractJsonLdOffer($);
+  const jsonLdProduct = extractJsonLdProduct($);
 
   const canonicalHref = firstNonEmpty(
     textFromSelector($, 'link[rel="canonical"]', "href"),
@@ -343,12 +366,14 @@ function extractMetadata(html: string, sourceUrl: string) {
     textFromSelector($, 'meta[name="description"]', "content"),
     textFromSelector($, 'meta[property="og:description"]', "content"),
   );
-  const imageUrl = firstNonEmpty(
+  const imageUrl = httpsImageUrl(firstNonEmpty(
+    jsonLdProduct.imageUrl,
     textFromSelector($, 'meta[property="og:image"]', "content"),
     textFromSelector($, 'meta[name="twitter:image"]', "content"),
-  );
+    textFromSelector($, 'link[rel="image_src"]', "href"),
+  ), canonicalUrl);
   const rawPrice = firstNonEmpty(
-    jsonLdOffer.price,
+    jsonLdProduct.price,
     textFromSelector($, 'meta[property="product:price:amount"]', "content"),
     textFromSelector($, 'meta[property="og:price:amount"]', "content"),
     valueFromSelector($, '[itemprop="price"]'),
@@ -357,7 +382,7 @@ function extractMetadata(html: string, sourceUrl: string) {
     valueFromSelector($, '[data-testid*="price" i]'),
   );
   const currencyCode = normalizeCurrencyCode(firstNonEmpty(
-    jsonLdOffer.currency,
+    jsonLdProduct.currency,
     textFromSelector($, 'meta[property="product:price:currency"]', "content"),
     textFromSelector($, 'meta[property="og:price:currency"]', "content"),
     valueFromSelector($, '[itemprop="priceCurrency"]'),
@@ -374,7 +399,7 @@ function extractMetadata(html: string, sourceUrl: string) {
     imageUrl,
     currencyCode,
     priceAmount,
-    brand: null,
+    brand: jsonLdProduct.brand,
     rawPayload: {
       fetchedAt: new Date().toISOString(),
       title,
@@ -386,13 +411,20 @@ function extractMetadata(html: string, sourceUrl: string) {
   } satisfies ProductMetadata;
 }
 
-function httpsImageUrl(rawUrl: string | null | undefined) {
+function httpsImageUrl(
+  rawUrl: string | null | undefined,
+  baseUrl?: string,
+) {
   if (!rawUrl) {
     return null;
   }
 
   try {
-    const url = new URL(rawUrl);
+    const url = baseUrl ? new URL(rawUrl, baseUrl) : new URL(rawUrl);
+    if (url.protocol === "http:") {
+      url.protocol = "https:";
+    }
+
     return url.protocol === "https:" && !isBlockedHostname(url.hostname)
       ? url.toString()
       : null;
@@ -407,7 +439,7 @@ function metadataFromExtracted(
 ) {
   const title = extracted.title;
   const description = extracted.description ?? null;
-  const imageUrl = httpsImageUrl(extracted.image_url);
+  const imageUrl = httpsImageUrl(extracted.image_url, sourceUrl);
   const currencyCode = normalizeCurrencyCode(extracted.currency_code ?? null);
   const priceAmount = extracted.price_amount ?? null;
   const brand = extracted.brand ?? null;

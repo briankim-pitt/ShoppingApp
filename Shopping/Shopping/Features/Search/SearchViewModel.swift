@@ -17,7 +17,7 @@ final class SearchViewModel {
     private var hasLoadedInitialProducts = false
 
     var canImport: Bool {
-        URL(string: trimmedURL) != nil && !isImporting
+        URL.productImportURL(from: trimmedURL) != nil && !isImporting
     }
 
     var canSearchProducts: Bool {
@@ -33,7 +33,8 @@ final class SearchViewModel {
     }
 
     func importProduct(using appModel: AppModel) async {
-        guard let url = URL(string: trimmedURL), !isImporting else { return }
+        guard let url = URL.productImportURL(from: trimmedURL),
+              !isImporting else { return }
         await importProduct(from: url, using: appModel)
     }
 

@@ -8,6 +8,10 @@ struct SupabaseAuthService: AuthServing {
         return true
     }
 
+    func currentEmail() async -> String? {
+        try? await client.auth.session.user.email
+    }
+
     func signIn(email: String, password: String) async throws {
         _ = try await client.auth.signIn(email: email, password: password)
     }

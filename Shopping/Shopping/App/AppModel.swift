@@ -13,6 +13,7 @@ final class AppModel {
     private let wishlistService: any WishlistServing
 
     var phase: AppPhase = .launching
+    var userEmail: String?
     var wallet: VirtualWallet?
     var dailyCheckInStatus: DailyCheckInStatus?
     var selectedTab: MainTab = .home
@@ -95,8 +96,13 @@ final class AppModel {
         cart.clear()
         wallet = nil
         dailyCheckInStatus = nil
+        userEmail = nil
         selectedTab = .home
         phase = .signedOut
+    }
+
+    func loadUserEmail() async {
+        userEmail = await authService.currentEmail()
     }
 
     func importProduct(

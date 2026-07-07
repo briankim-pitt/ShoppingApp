@@ -26,7 +26,7 @@ struct PendingProductImport: Equatable, Sendable {
         }
 
         guard let rawProductURL = value("url"),
-              let productURL = URL(string: rawProductURL)
+              let productURL = URL.productImportURL(from: rawProductURL)
         else {
             return nil
         }
@@ -36,7 +36,7 @@ struct PendingProductImport: Equatable, Sendable {
             ExtractedProductMetadata(
                 title: title,
                 description: value("description"),
-                imageURL: value("image").flatMap { URL(string: $0) },
+                imageURL: value("image").flatMap(URL.productImportURL),
                 priceAmount: value("price").flatMap {
                     Decimal(string: $0, locale: Locale(identifier: "en_US"))
                 },

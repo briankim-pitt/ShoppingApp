@@ -140,6 +140,9 @@ private struct PreviewAuthService: AuthServing {
     }
 
     func hasSession() async throws -> Bool { hasSessionValue }
+    func currentEmail() async -> String? {
+        hasSessionValue ? "shopper@wandercart.app" : nil
+    }
     func signIn(email: String, password: String) async throws {}
     func signUp(email: String, password: String) async throws {}
     func signOut() async throws {}

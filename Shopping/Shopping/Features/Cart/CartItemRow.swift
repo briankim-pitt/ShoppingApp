@@ -94,10 +94,6 @@ struct CartItemRow: View {
             .font(.subheadline)
             .foregroundStyle(Color.brandPrimary)
         }
-
-        Text("Source price: \(item.product.priceText)")
-            .font(.caption)
-            .foregroundStyle(.tertiary)
     }
 
     private func decimal(from text: String) -> Decimal? {

@@ -1,6 +1,8 @@
 struct UnavailableAuthService: AuthServing {
     func hasSession() async throws -> Bool { false }
 
+    func currentEmail() async -> String? { nil }
+
     func signIn(email: String, password: String) async throws {
         throw ConfigurationError.missingSupabaseURL
     }

@@ -8,6 +8,61 @@ function extractProductData() {
       : "";
   const meta = (selector) =>
     document.querySelector(selector)?.getAttribute("content")?.trim() ?? "";
+  const attr = (selector, name) =>
+    document.querySelector(selector)?.getAttribute(name)?.trim() ?? "";
+  const firstText = (...selectors) => {
+    for (const selector of selectors) {
+      const value = document.querySelector(selector)?.textContent?.trim();
+      if (value) return value;
+    }
+    return "";
+  };
+  const firstAttr = (selectors, names) => {
+    for (const selector of selectors) {
+      const element = document.querySelector(selector);
+      if (!element) continue;
+
+      for (const name of names) {
+        const value = name === "currentSrc"
+          ? element.currentSrc
+          : element.getAttribute(name);
+        if (value?.trim()) return value.trim();
+      }
+    }
+    return "";
+  };
+  const firstSrcSetURL = (srcset) =>
+    text(srcset).split(",").map((entry) => entry.trim().split(/\s+/)[0])
+      .find(Boolean) ?? "";
+  const escaped = (value) => {
+    if (!value) return "";
+    return value.replace(/["\\]/g, "\\$&");
+  };
+  const normalizeURL = (value) => {
+    try {
+      return value ? new URL(value, document.location.href).href : "";
+    } catch {
+      return "";
+    }
+  };
+  const parsePrice = (value) => {
+    const match = text(value).match(/(?:USD|CAD|AUD)?\s*[$€£¥]\s*\d[\d,.]*/i)
+      ?? text(value).match(/\b\d[\d,.]*\s*(?:USD|CAD|AUD|EUR|GBP|JPY)\b/i);
+    if (!match) return "";
+
+    const parsed = Number.parseFloat(match[0].replace(/[^0-9.]/g, ""));
+    return Number.isFinite(parsed) && parsed >= 0 ? String(parsed) : "";
+  };
+  const currencyFrom = (value) => {
+    const raw = text(value);
+    const explicit = raw.match(/\b(USD|CAD|AUD|EUR|GBP|JPY)\b/i)?.[1];
+    if (explicit) return explicit.toUpperCase();
+    if (raw.includes("€")) return "EUR";
+    if (raw.includes("£")) return "GBP";
+    if (raw.includes("¥")) return "JPY";
+    if (raw.includes("$")) return "USD";
+    return "";
+  };
 
   let product = null;
   for (const script of document.querySelectorAll(
@@ -38,19 +93,61 @@ function extractProductData() {
   const offer = [].concat(product?.offers ?? [])[0] ?? {};
   const priceSpec = offer.priceSpecification ?? {};
   const image = [].concat(product?.image ?? [])[0];
-
-  const rawPrice =
+  const skuId = new URL(document.location.href).searchParams.get("skuId") ?? "";
+  const skuSelectors = skuId
+    ? [
+      `img[src*="${escaped(skuId)}"]`,
+      `img[currentSrc*="${escaped(skuId)}"]`,
+      `img[srcset*="${escaped(skuId)}"]`,
+      `source[srcset*="${escaped(skuId)}"]`,
+    ]
+    : [];
+  const productImageSelectors = [
+    ...skuSelectors,
+    '[data-at="product_image"] img',
+    '[data-comp*="ProductImage"] img',
+    '[data-comp*="ProductImages"] img',
+    '[data-comp*="ProductMedia"] img',
+    '[aria-label*="product image" i] img',
+    'img[src*="/productimages/sku/"]',
+    'img[srcset*="/productimages/sku/"]',
+    'source[srcset*="/productimages/sku/"]',
+    'img[src*="/productimages/"]',
+    'img[srcset*="/productimages/"]',
+    'source[srcset*="/productimages/"]',
+    'main picture img',
+  ];
+  const renderedProductImage =
+    firstAttr(productImageSelectors, ["currentSrc", "src", "data-src"]) ||
+    firstSrcSetURL(firstAttr(productImageSelectors, ["srcset"]));
+  const rawImage =
+    renderedProductImage ||
+    text(typeof image === "object" ? image?.url : image) ||
+    meta('meta[property="og:image"]') ||
+    meta('meta[name="twitter:image"]') ||
+    attr('link[rel="image_src"]', "href");
+  const rawPriceText =
     text(offer.price) ||
     text(offer.lowPrice) ||
     text(priceSpec.price) ||
     meta('meta[property="product:price:amount"]') ||
-    document.querySelector('[itemprop="price"]')?.getAttribute("content") ||
-    "";
-  const parsedPrice = Number.parseFloat(rawPrice.replace(/[^0-9.]/g, ""));
+    attr('[itemprop="price"]', "content") ||
+    firstText(
+      '[data-at="price_sale"]',
+      '[data-at="price_regular"]',
+      '[data-at="product_price"]',
+      '[data-comp*="Price"]',
+      '[class*="price" i]',
+    );
+
+  const rawPrice =
+    parsePrice(rawPriceText) ||
+    parsePrice(document.querySelector("main")?.textContent ?? "");
 
   return {
     title: (
       text(product?.name) ||
+      firstText('[data-at="product_name"]') ||
       meta('meta[property="og:title"]') ||
       document.title.trim()
     ).slice(0, 200),
@@ -59,19 +156,16 @@ function extractProductData() {
       meta('meta[name="description"]') ||
       meta('meta[property="og:description"]')
     ).slice(0, 300),
-    image:
-      text(typeof image === "object" ? image?.url : image) ||
-      meta('meta[property="og:image"]'),
+    image: normalizeURL(rawImage),
     brand: text(
       typeof product?.brand === "object" ? product?.brand?.name : product?.brand,
-    ).slice(0, 120),
-    price: Number.isFinite(parsedPrice) && parsedPrice >= 0
-      ? String(parsedPrice)
-      : "",
+    ) || firstText('[data-at="brand_name"]').slice(0, 120),
+    price: rawPrice,
     currency: (
       text(offer.priceCurrency) ||
       text(priceSpec.priceCurrency) ||
-      meta('meta[property="product:price:currency"]')
+      meta('meta[property="product:price:currency"]') ||
+      currencyFrom(rawPriceText)
     ).slice(0, 3),
   };
 }
