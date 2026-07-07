@@ -8,9 +8,11 @@ final class SearchViewModel {
     var selectedCategory: ProductSearchCategory = .all
     var productQuery = ""
     var products: [Product] = []
+    var brands: [ProductBrand] = []
     var isSearchingProducts = false
     var hasSearchedProducts = false
     var correctedQuery: String?
+    private var dominantCategoryID: String?
     var productURL = ""
     var isImporting = false
     var result: ProductImportResult?
@@ -98,12 +100,22 @@ final class SearchViewModel {
                 query: query
             )
             products = response.products
+            brands = response.brandRefinements
+            dominantCategoryID = response.dominantCategoryID
             correctedQuery = response.correctedQuery
         } catch {
             products = []
+            brands = []
+            dominantCategoryID = nil
             correctedQuery = nil
             errorMessage = error.localizedDescription
         }
     }
 
+    func brandSelection(for brand: ProductBrand) -> BrandSelection {
+        BrandSelection(
+            name: brand.name,
+            categoryID: dominantCategoryID
+        )
+    }
 }

@@ -102,8 +102,16 @@ final class AppModel {
         try await productImportService.importProduct(from: url)
     }
 
-    func searchProducts(query: String) async throws -> ProductSearchResponse {
-        try await productSearchService.searchProducts(query: query)
+    func searchProducts(
+        query: String,
+        brand: String? = nil,
+        categoryID: String? = nil
+    ) async throws -> ProductSearchResponse {
+        try await productSearchService.searchProducts(
+            query: query,
+            brand: brand,
+            categoryID: categoryID
+        )
     }
 
     func listOrders() async throws -> [VirtualOrder] {

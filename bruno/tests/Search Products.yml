@@ -29,4 +29,9 @@ settings:
   followRedirects: true
   maxRedirects: 5
 
-docs: Searches eBay by product or brand name, caches normalized listings in products, and returns Product objects that can be added directly to the cart.
+docs: >-
+  Searches eBay by product or brand name, caches normalized listings in
+  products, and returns Product objects that can be added directly to the
+  cart. The response includes "brands" refinements and a
+  "dominant_category_id". Pass optional "brand" (and "category_id" from a
+  prior response's dominant_category_id) to browse products for one brand.

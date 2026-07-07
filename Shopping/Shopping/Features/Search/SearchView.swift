@@ -50,6 +50,12 @@ struct SearchView: View {
                 .padding(.top, 8)
             }
             .appPageTitle("Discover")
+            .navigationDestination(for: BrandSelection.self) { selection in
+                BrandProductsView(
+                    selection: selection,
+                    transitionNamespace: productTransition
+                )
+            }
             .navigationDestination(for: Product.self) { product in
                 ProductDetailView(
                     product: product

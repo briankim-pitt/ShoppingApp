@@ -53,6 +53,22 @@ struct OrderDetailView: View {
                     }
                     .brandListRow()
 
+                    if let route = order.shipmentRoute {
+                        Section("Shipment") {
+                            VStack(alignment: .leading, spacing: 8) {
+                                OrderTrackingMapView(order: order, route: route)
+
+                                Text(
+                                    "Simulated route from \(route.originName) to \(route.destinationName)"
+                                )
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                            }
+                            .padding(.vertical, 4)
+                        }
+                        .brandListRow()
+                    }
+
                     Section("Items") {
                         ForEach(order.items) { item in
                             OrderItemRow(item: item)

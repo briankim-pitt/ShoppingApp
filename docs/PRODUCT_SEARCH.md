@@ -10,13 +10,21 @@ Product-name and brand search uses the eBay Browse API.
 {
   "query": "wireless keyboard",
   "limit": 20,
-  "marketplace_id": "EBAY_US"
+  "marketplace_id": "EBAY_US",
+  "brand": "Wooting",
+  "category_id": "33963"
 }
 ```
 
 The endpoint requires an authenticated Supabase user. `query` must contain
 2-100 characters, `limit` must be 1-50, and `marketplace_id` must be one of
 the eBay marketplaces accepted by the Edge Function.
+
+`brand` and `category_id` are optional. When both are present, results are
+restricted with an eBay `aspect_filter` scoped to that category. With only
+`brand`, the brand is prepended to the query keywords. `category_id` must be
+a numeric eBay category id, normally the `dominant_category_id` from a prior
+response.
 
 The response contains normalized `Product` records:
 
@@ -38,9 +46,18 @@ The response contains normalized `Product` records:
   "total": 1000,
   "provider": "ebay",
   "marketplace_id": "EBAY_US",
-  "corrected_query": null
+  "corrected_query": null,
+  "brands": [
+    { "name": "Logitech", "match_count": 240 }
+  ],
+  "dominant_category_id": "33963"
 }
 ```
+
+`brands` lists up to 12 brand refinements from eBay's aspect distributions
+for the search, sorted by match count ("Unbranded" is dropped). Products
+cached during a brand-filtered search are stored with their `brand` so the
+catalog accumulates brand metadata over time.
 
 Results are cached in `public.products`, allowing the existing cart and
 checkout flow to use them without another import step. Adult-only results are
@@ -87,6 +104,11 @@ The Search tab has two modes:
 
 - `Products`: search eBay by product or brand and add a result to the cart.
 - `URL`: use the existing page importer.
+
+Each product search surfaces a "Shop by Brand" chip carousel built from the
+`brands` refinements. Tapping a chip pushes a brand page that browses
+products for that brand (filtered through `brand` + `dominant_category_id`).
+Product cards show the brand name when the catalog knows it.
 
 The Edge Function obtains and caches an eBay application access token. eBay
 credentials and tokens remain server-side.

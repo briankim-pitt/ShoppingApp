@@ -12,6 +12,13 @@ struct DiscoverProductCard: View {
                     in: transitionNamespace
                 )
 
+            if let brand = product.brand {
+                Text(brand)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+
             Text(product.title)
                 .font(.subheadline)
                 .lineLimit(2)

@@ -25,6 +25,8 @@ const requestSchema = z.object({
   query: z.string().trim().min(2).max(100),
   limit: z.number().int().min(1).max(50).default(20),
   marketplace_id: marketplaceSchema.optional(),
+  brand: z.string().trim().min(1).max(80).optional(),
+  category_id: z.string().trim().regex(/^\d{1,12}$/).optional(),
 });
 
 type EbayImage = {
@@ -63,6 +65,21 @@ type EbaySearchResponse = {
   autoCorrections?: {
     q?: string;
   };
+  refinement?: {
+    dominantCategoryId?: string;
+    aspectDistributions?: Array<{
+      localizedAspectName?: string;
+      aspectValueDistributions?: Array<{
+        localizedAspectValue?: string;
+        matchCount?: number;
+      }>;
+    }>;
+  };
+};
+
+type BrandRefinement = {
+  name: string;
+  match_count: number | null;
 };
 
 type CachedProduct = {
@@ -73,6 +90,7 @@ type CachedProduct = {
   currency_code: string | null;
   price_amount: number | null;
   wandercoin_price_amount: number | null;
+  brand?: string;
   metadata: Record<string, unknown>;
   last_imported_at: string;
 };
@@ -87,6 +105,7 @@ type SavedProduct = {
   currency_code: string | null;
   price_amount: number | null;
   wandercoin_price_amount: number | null;
+  brand: string | null;
   created_at: string;
   updated_at: string;
   last_imported_at: string;
@@ -238,9 +257,32 @@ function normalizedImageUrl(image: EbayImage | undefined) {
   }
 }
 
+function brandRefinements(response: EbaySearchResponse): BrandRefinement[] {
+  const distribution = response.refinement?.aspectDistributions?.find(
+    (aspect) => aspect.localizedAspectName?.toLowerCase() === "brand",
+  );
+
+  const brands = (distribution?.aspectValueDistributions ?? [])
+    .flatMap((value) => {
+      const name = value.localizedAspectValue?.trim();
+      if (!name || /^unbranded$/i.test(name)) {
+        return [];
+      }
+
+      return [{
+        name,
+        match_count: value.matchCount ?? null,
+      }];
+    })
+    .sort((a, b) => (b.match_count ?? 0) - (a.match_count ?? 0));
+
+  return brands.slice(0, 12);
+}
+
 function cachedProduct(
   item: EbayItemSummary,
   query: string,
+  brand: string | undefined,
   marketplace: z.infer<typeof marketplaceSchema>,
   fetchedAt: string,
 ) {
@@ -260,6 +302,7 @@ function cachedProduct(
   const priceAmount = normalizedPrice(item.price);
 
   return {
+    ...brand ? { brand } : {},
     canonical_url: canonicalUrl,
     source_domain: new URL(canonicalUrl).hostname,
     title: item.title.trim(),
@@ -288,15 +331,37 @@ async function searchEbay(
   query: string,
   limit: number,
   marketplace: z.infer<typeof marketplaceSchema>,
+  brand?: string,
+  categoryId?: string,
 ) {
   const token = await ebayAccessToken();
   const url = new URL(
     "/buy/browse/v1/item_summary/search",
     ebayApiBaseUrl(),
   );
-  url.searchParams.set("q", query);
   url.searchParams.set("limit", String(limit));
   url.searchParams.set("auto_correct", "KEYWORD");
+  // MATCHES is rejected by the Browse API; FULL keeps item summaries in the
+  // response when ASPECT_REFINEMENTS is requested.
+  url.searchParams.set("fieldgroups", "FULL,ASPECT_REFINEMENTS");
+
+  if (brand && categoryId) {
+    // Aspect filters only apply within a category scope.
+    url.searchParams.set("q", query);
+    url.searchParams.set("category_ids", categoryId);
+    url.searchParams.set(
+      "aspect_filter",
+      `categoryId:${categoryId},Brand:{${brand}}`,
+    );
+  } else if (brand) {
+    const lowercasedQuery = query.toLowerCase();
+    const q = lowercasedQuery.includes(brand.toLowerCase())
+      ? query
+      : `${brand} ${query}`;
+    url.searchParams.set("q", q);
+  } else {
+    url.searchParams.set("q", query);
+  }
 
   const response = await fetch(url, {
     headers: {
@@ -333,6 +398,8 @@ export default {
         payload.query,
         payload.limit,
         marketplace,
+        payload.brand,
+        payload.category_id,
       );
     } catch (error) {
       const message = errorMessage(error);
@@ -346,6 +413,7 @@ export default {
       const product = cachedProduct(
         item,
         payload.query,
+        payload.brand,
         marketplace,
         fetchedAt,
       );
@@ -353,6 +421,10 @@ export default {
         productsByUrl.set(product.canonical_url, product);
       }
     }
+
+    const brands = brandRefinements(searchResponse);
+    const dominantCategoryId = searchResponse.refinement?.dominantCategoryId ??
+      null;
 
     const productRows = [...productsByUrl.values()];
     if (productRows.length === 0) {
@@ -362,6 +434,8 @@ export default {
         provider: "ebay",
         marketplace_id: marketplace,
         corrected_query: searchResponse.autoCorrections?.q ?? null,
+        brands,
+        dominant_category_id: dominantCategoryId,
       });
     }
 
@@ -374,7 +448,7 @@ export default {
         defaultToNull: false,
       })
       .select(
-        "id,canonical_url,source_domain,title,description,image_url,currency_code,price_amount,wandercoin_price_amount,created_at,updated_at,last_imported_at",
+        "id,canonical_url,source_domain,title,description,image_url,currency_code,price_amount,wandercoin_price_amount,brand,created_at,updated_at,last_imported_at",
       );
 
     if (error) {
@@ -395,6 +469,8 @@ export default {
       provider: "ebay",
       marketplace_id: marketplace,
       corrected_query: searchResponse.autoCorrections?.q ?? null,
+      brands,
+      dominant_category_id: dominantCategoryId,
     });
   }),
 };

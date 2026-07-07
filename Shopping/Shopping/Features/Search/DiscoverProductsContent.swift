@@ -45,6 +45,13 @@ struct DiscoverProductsContent: View {
             .padding(.vertical, 32)
         }
 
+        if !viewModel.brands.isEmpty, !viewModel.isSearchingProducts {
+            BrandChipCarousel(
+                brands: viewModel.brands,
+                selection: viewModel.brandSelection
+            )
+        }
+
         if !viewModel.popularProducts.isEmpty {
             DiscoverProductSection(
                 title: "Popular Right Now",

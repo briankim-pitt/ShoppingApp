@@ -13,6 +13,12 @@ struct VirtualOrder: Decodable, Equatable, Identifiable, Sendable {
     let cancelledAt: Date?
     let estimatedDeliveryAt: Date?
     let nextStatusAt: Date?
+    let originName: String?
+    let originLatitude: Double?
+    let originLongitude: Double?
+    let destinationName: String?
+    let destinationLatitude: Double?
+    let destinationLongitude: Double?
     let createdAt: Date
     let items: [VirtualOrderItem]
     let events: [VirtualOrderStatusEvent]
@@ -30,6 +36,12 @@ struct VirtualOrder: Decodable, Equatable, Identifiable, Sendable {
         case cancelledAt = "cancelled_at"
         case estimatedDeliveryAt = "estimated_delivery_at"
         case nextStatusAt = "next_status_at"
+        case originName = "origin_name"
+        case originLatitude = "origin_latitude"
+        case originLongitude = "origin_longitude"
+        case destinationName = "destination_name"
+        case destinationLatitude = "destination_latitude"
+        case destinationLongitude = "destination_longitude"
         case createdAt = "created_at"
         case items = "virtual_order_items"
         case events = "virtual_order_status_events"

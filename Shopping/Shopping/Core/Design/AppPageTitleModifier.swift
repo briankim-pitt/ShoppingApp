@@ -159,6 +159,11 @@ extension View {
         modifier(AppPageTitleModifier(title: title))
     }
 
+    func appPageTitle(verbatim title: String) -> some View {
+        navigationTitle(title)
+            .toolbarTitleDisplayMode(.inlineLarge)
+    }
+
     func brandPageBackground() -> some View {
         scrollContentBackground(.hidden)
             .background(Color.brandBackground)

@@ -485,3 +485,10 @@ enabled = true
 verify_jwt = false
 import_map = "./functions/search-products/deno.json"
 entrypoint = "./functions/search-products/index.ts"
+
+# Public endpoint: eBay calls it without Supabase credentials.
+[functions.ebay-account-deletion]
+enabled = true
+verify_jwt = false
+import_map = "./functions/ebay-account-deletion/deno.json"
+entrypoint = "./functions/ebay-account-deletion/index.ts"

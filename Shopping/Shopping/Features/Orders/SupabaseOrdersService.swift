@@ -20,6 +20,12 @@ struct SupabaseOrdersService: OrdersServing {
                 cancelled_at,
                 estimated_delivery_at,
                 next_status_at,
+                origin_name,
+                origin_latitude,
+                origin_longitude,
+                destination_name,
+                destination_latitude,
+                destination_longitude,
                 created_at,
                 virtual_order_items (
                   id,

@@ -24,6 +24,7 @@ enum PreviewData {
             sourceDomain: "wooting.io",
             title: "Wooting 60HE+",
             description: "Analog mechanical keyboard with rapid trigger and a compact layout.",
+            brand: "Wooting",
             imageURL: URL(string: "https://wooting-website.ams3.cdn.digitaloceanspaces.com/products/keyboards/60HE/60HE_OG.webp"),
             currencyCode: "USD",
             priceAmount: 174.99,
@@ -52,6 +53,12 @@ enum PreviewData {
                 cancelledAt: nil,
                 estimatedDeliveryAt: now.addingTimeInterval(180),
                 nextStatusAt: now.addingTimeInterval(120),
+                originName: "Seattle Fulfillment Center",
+                originLatitude: 47.6062,
+                originLongitude: -122.3321,
+                destinationName: "Tokyo Fulfillment Center",
+                destinationLatitude: 35.6762,
+                destinationLongitude: 139.6503,
                 createdAt: now.addingTimeInterval(-180),
                 items: [
                     VirtualOrderItem(
@@ -202,13 +209,22 @@ private struct PreviewProductImportService: ProductImportServing {
 }
 
 private struct PreviewProductSearchService: ProductSearchServing {
-    func searchProducts(query: String) async throws -> ProductSearchResponse {
+    func searchProducts(
+        query: String,
+        brand: String?,
+        categoryID: String?
+    ) async throws -> ProductSearchResponse {
         ProductSearchResponse(
             products: [PreviewData.product],
             total: 1,
             provider: "ebay",
             marketplaceID: "EBAY_US",
-            correctedQuery: nil
+            correctedQuery: nil,
+            brands: [
+                ProductBrand(name: "Wooting", matchCount: 12),
+                ProductBrand(name: "Keychron", matchCount: 8),
+            ],
+            dominantCategoryID: "33963"
         )
     }
 }

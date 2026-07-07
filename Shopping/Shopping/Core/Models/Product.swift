@@ -6,6 +6,7 @@ struct Product: Decodable, Equatable, Hashable, Identifiable, Sendable {
     let sourceDomain: String
     let title: String
     let description: String?
+    let brand: String?
     let imageURL: URL?
     let currencyCode: String?
     let priceAmount: Decimal?
@@ -20,6 +21,7 @@ struct Product: Decodable, Equatable, Hashable, Identifiable, Sendable {
         case sourceDomain = "source_domain"
         case title
         case description
+        case brand
         case imageURL = "image_url"
         case currencyCode = "currency_code"
         case priceAmount = "price_amount"

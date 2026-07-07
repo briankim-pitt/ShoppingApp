@@ -36,6 +36,30 @@ after its scheduled timestamp.
 tracking interface. Authenticated users can read events only for their own
 orders. Clients cannot insert or update events or order shipping fields.
 
+## Tracking Route
+
+`virtual_orders` also stores the simulated package route:
+
+- `origin_name`
+- `origin_latitude`
+- `origin_longitude`
+- `destination_name`
+- `destination_latitude`
+- `destination_longitude`
+
+Routes are assigned by `private.assign_virtual_order_route()` before insert.
+Both the trigger and existing-order backfill call
+`private.virtual_order_route(order_id)`, which picks deterministic origin and
+destination locations from a fixed world-location list seeded by the order ID.
+The origin and destination always differ, and clients cannot write these
+columns.
+
+The iOS client derives the package position locally. Orders that are `ordered`
+or `processing` show the package at the origin. Orders that are `shipped` or
+`out_for_delivery` interpolate along the route using elapsed time between
+`shipped_at` and `estimated_delivery_at`. Delivered orders show the package at
+the destination, and cancelled orders hide the map.
+
 ## Manual Testing
 
 Send the Bruno `Simulate Order Shipping` request:

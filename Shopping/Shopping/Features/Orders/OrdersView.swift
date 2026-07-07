@@ -71,6 +71,8 @@ struct OrdersView: View {
                             .foregroundStyle(Color.brandAccentCoral)
                         }
 
+                        OrdersMapView(orders: filteredOrders)
+
                         ForEach(filteredOrders) { order in
                             NavigationLink {
                                 OrderDetailView(
