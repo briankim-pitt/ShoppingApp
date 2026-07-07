@@ -2,7 +2,6 @@ import SwiftUI
 
 struct BrandChipCarousel: View {
     let brands: [ProductBrand]
-    let selection: (ProductBrand) -> BrandSelection
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -12,7 +11,7 @@ struct BrandChipCarousel: View {
             ScrollView(.horizontal) {
                 LazyHStack(spacing: 8) {
                     ForEach(brands) { brand in
-                        NavigationLink(value: selection(brand)) {
+                        NavigationLink(value: brand) {
                             BrandChip(brand: brand)
                         }
                         .buttonStyle(.plain)

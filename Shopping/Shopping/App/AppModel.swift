@@ -7,7 +7,7 @@ final class AppModel {
     private let authService: any AuthServing
     private let walletService: any WalletServing
     private let productImportService: any ProductImportServing
-    private let productSearchService: any ProductSearchServing
+    private let catalogService: any CatalogServing
     private let ordersService: any OrdersServing
     private let checkoutService: any CheckoutServing
     private let wishlistService: any WishlistServing
@@ -23,7 +23,7 @@ final class AppModel {
         authService: any AuthServing,
         walletService: any WalletServing,
         productImportService: any ProductImportServing,
-        productSearchService: any ProductSearchServing,
+        catalogService: any CatalogServing,
         ordersService: any OrdersServing,
         checkoutService: any CheckoutServing,
         wishlistService: any WishlistServing,
@@ -32,7 +32,7 @@ final class AppModel {
         self.authService = authService
         self.walletService = walletService
         self.productImportService = productImportService
-        self.productSearchService = productSearchService
+        self.catalogService = catalogService
         self.ordersService = ordersService
         self.checkoutService = checkoutService
         self.wishlistService = wishlistService
@@ -46,7 +46,7 @@ final class AppModel {
                 authService: dependencies.authService,
                 walletService: dependencies.walletService,
                 productImportService: dependencies.productImportService,
-                productSearchService: dependencies.productSearchService,
+                catalogService: dependencies.catalogService,
                 ordersService: dependencies.ordersService,
                 checkoutService: dependencies.checkoutService,
                 wishlistService: dependencies.wishlistService
@@ -56,7 +56,7 @@ final class AppModel {
                 authService: UnavailableAuthService(),
                 walletService: UnavailableWalletService(),
                 productImportService: UnavailableProductImportService(),
-                productSearchService: UnavailableProductSearchService(),
+                catalogService: UnavailableCatalogService(),
                 ordersService: UnavailableOrdersService(),
                 checkoutService: UnavailableCheckoutService(),
                 wishlistService: UnavailableWishlistService()
@@ -123,16 +123,20 @@ final class AppModel {
         return pendingProductImport
     }
 
-    func searchProducts(
-        query: String,
-        brand: String? = nil,
-        categoryID: String? = nil
-    ) async throws -> ProductSearchResponse {
-        try await productSearchService.searchProducts(
-            query: query,
-            brand: brand,
-            categoryID: categoryID
-        )
+    func browseProducts() async throws -> [Product] {
+        try await catalogService.browseProducts()
+    }
+
+    func searchProducts(query: String) async throws -> [Product] {
+        try await catalogService.searchProducts(query: query)
+    }
+
+    func products(forBrand brand: String) async throws -> [Product] {
+        try await catalogService.products(forBrand: brand)
+    }
+
+    func listBrands() async throws -> [ProductBrand] {
+        try await catalogService.listBrands()
     }
 
     func listOrders() async throws -> [VirtualOrder] {

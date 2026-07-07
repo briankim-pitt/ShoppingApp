@@ -1,10 +1,61 @@
-# Product Search
+# Imported Product Catalog
 
-Product-name and brand search uses the eBay Browse API.
+Discover is backed by imported products stored in `public.products`. Rows are
+created by the URL importer, the iOS share extension, and the Safari
+extension. The app reads catalog data directly from PostgREST; it no longer
+calls the eBay-backed `search-products` Edge Function.
 
-## Request
+## Data Sources
 
-`POST /functions/v1/search-products`
+- `public.products`: normalized product rows used by Discover, cart,
+  checkout, wishlists, and orders.
+- `public.product_brands`: a `security_invoker` view that returns distinct
+  non-null product brands with counts:
+
+```json
+[
+  { "name": "Wooting", "match_count": 12 }
+]
+```
+
+Authenticated users can select from both the table and the view. Anonymous
+users should not be granted access to the brand view.
+
+## Discover Flow
+
+The initial Discover load fetches the latest imported products:
+
+```http
+GET /rest/v1/products?select=...&order=last_imported_at.desc&limit=50
+```
+
+Search in Products mode filters the imported catalog with case-insensitive
+matches on `title` or `brand`. Before sending the PostgREST `or` filter, the
+app strips characters that can break filter syntax: `%`, `,`, `(`, `)`, and
+`.`.
+
+Brand chips come from `product_brands`, ordered by `match_count` descending.
+Tapping a brand opens a brand page backed by:
+
+```http
+GET /rest/v1/products?brand=ilike.<brand>&order=last_imported_at.desc&limit=50
+```
+
+If the catalog is empty, Discover points users to import products from Safari
+or paste a product URL.
+
+## Imports
+
+Product import still uses `supabase/functions/import-product/`. Existing
+eBay-cached rows in `products` remain valid catalog content and do not need a
+data cleanup.
+
+## Deprecated: eBay Search
+
+`supabase/functions/search-products/` remains in the repo for future use and
+manual testing, but the Swift app no longer calls it.
+
+The deprecated endpoint is:
 
 ```json
 {
@@ -16,53 +67,10 @@ Product-name and brand search uses the eBay Browse API.
 }
 ```
 
-The endpoint requires an authenticated Supabase user. `query` must contain
-2-100 characters, `limit` must be 1-50, and `marketplace_id` must be one of
-the eBay marketplaces accepted by the Edge Function.
-
-`brand` and `category_id` are optional. When both are present, results are
-restricted with an eBay `aspect_filter` scoped to that category. With only
-`brand`, the brand is prepended to the query keywords. `category_id` must be
-a numeric eBay category id, normally the `dominant_category_id` from a prior
-response.
-
-The response contains normalized `Product` records:
-
-```json
-{
-  "products": [
-    {
-      "id": "bae57acd-a9c7-4acc-8779-6172c4bcc2b5",
-      "canonical_url": "https://www.ebay.com/itm/100000000001",
-      "source_domain": "www.ebay.com",
-      "title": "Wireless Keyboard",
-      "description": null,
-      "image_url": "https://i.ebayimg.com/images/example.jpg",
-      "currency_code": "USD",
-      "price_amount": 79.99,
-      "wandercoin_price_amount": 79.99
-    }
-  ],
-  "total": 1000,
-  "provider": "ebay",
-  "marketplace_id": "EBAY_US",
-  "corrected_query": null,
-  "brands": [
-    { "name": "Logitech", "match_count": 240 }
-  ],
-  "dominant_category_id": "33963"
-}
-```
-
-`brands` lists up to 12 brand refinements from eBay's aspect distributions
-for the search, sorted by match count ("Unbranded" is dropped). Products
-cached during a brand-filtered search are stored with their `brand` so the
-catalog accumulates brand metadata over time.
-
-Results are cached in `public.products`, allowing the existing cart and
-checkout flow to use them without another import step. Adult-only results are
-discarded. URL query parameters are removed before caching to prevent duplicate
-rows for tracking variations of the same listing.
+It requires an authenticated Supabase user. `query` must contain 2-100
+characters, `limit` must be 1-50, and `marketplace_id` must be one of the
+eBay marketplaces accepted by the Edge Function. Optional `brand` and
+`category_id` fields apply eBay-specific filtering.
 
 ## eBay Credentials
 
@@ -89,26 +97,3 @@ npx supabase functions deploy search-products
 ```
 
 Do not put eBay credentials in the Swift app or commit `.env.local`.
-
-## Marketplace And WanderCoin Pricing
-
-Search defaults to `EBAY_US`. USD prices are copied to
-`wandercoin_price_amount` at the fixed rate of one USD to one WanderCoin.
-The original `price_amount` and `currency_code` remain unchanged as source
-metadata. Non-USD listings do not receive an automatic coin price and require
-a manual WanderCoin amount before checkout.
-
-## Swift Flow
-
-The Search tab has two modes:
-
-- `Products`: search eBay by product or brand and add a result to the cart.
-- `URL`: use the existing page importer.
-
-Each product search surfaces a "Shop by Brand" chip carousel built from the
-`brands` refinements. Tapping a chip pushes a brand page that browses
-products for that brand (filtered through `brand` + `dominant_category_id`).
-Product cards show the brand name when the catalog knows it.
-
-The Edge Function obtains and caches an eBay application access token. eBay
-credentials and tokens remain server-side.

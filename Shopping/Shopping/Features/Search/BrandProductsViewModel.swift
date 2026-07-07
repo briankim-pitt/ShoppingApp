@@ -10,19 +10,19 @@ final class BrandProductsViewModel {
 
     private var hasLoaded = false
 
-    func load(selection: BrandSelection, using appModel: AppModel) async {
+    func load(brand: ProductBrand, using appModel: AppModel) async {
         guard !hasLoaded else { return }
 
         hasLoaded = true
-        await fetch(selection: selection, using: appModel)
+        await fetch(brand: brand, using: appModel)
     }
 
-    func retry(selection: BrandSelection, using appModel: AppModel) async {
-        await fetch(selection: selection, using: appModel)
+    func retry(brand: ProductBrand, using appModel: AppModel) async {
+        await fetch(brand: brand, using: appModel)
     }
 
     private func fetch(
-        selection: BrandSelection,
+        brand: ProductBrand,
         using appModel: AppModel
     ) async {
         isLoading = true
@@ -30,12 +30,7 @@ final class BrandProductsViewModel {
         defer { isLoading = false }
 
         do {
-            let response = try await appModel.searchProducts(
-                query: selection.name,
-                brand: selection.name,
-                categoryID: selection.categoryID
-            )
-            products = response.products
+            products = try await appModel.products(forBrand: brand.name)
         } catch {
             products = []
             errorMessage = error.localizedDescription

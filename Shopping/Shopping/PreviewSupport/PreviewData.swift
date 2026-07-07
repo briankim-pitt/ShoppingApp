@@ -102,7 +102,7 @@ enum PreviewData {
             authService: PreviewAuthService(hasSession: false),
             walletService: PreviewWalletService(wallet: nil),
             productImportService: PreviewProductImportService(),
-            productSearchService: PreviewProductSearchService(),
+            catalogService: PreviewCatalogService(),
             ordersService: PreviewOrdersService(orders: []),
             checkoutService: PreviewCheckoutService(),
             wishlistService: PreviewWishlistService()
@@ -114,7 +114,7 @@ enum PreviewData {
             authService: PreviewAuthService(hasSession: true),
             walletService: PreviewWalletService(wallet: wallet),
             productImportService: PreviewProductImportService(),
-            productSearchService: PreviewProductSearchService(),
+            catalogService: PreviewCatalogService(),
             ordersService: PreviewOrdersService(orders: orders),
             checkoutService: PreviewCheckoutService(),
             wishlistService: PreviewWishlistService()
@@ -211,24 +211,24 @@ private struct PreviewProductImportService: ProductImportServing {
     }
 }
 
-private struct PreviewProductSearchService: ProductSearchServing {
-    func searchProducts(
-        query: String,
-        brand: String?,
-        categoryID: String?
-    ) async throws -> ProductSearchResponse {
-        ProductSearchResponse(
-            products: [PreviewData.product],
-            total: 1,
-            provider: "ebay",
-            marketplaceID: "EBAY_US",
-            correctedQuery: nil,
-            brands: [
-                ProductBrand(name: "Wooting", matchCount: 12),
-                ProductBrand(name: "Keychron", matchCount: 8),
-            ],
-            dominantCategoryID: "33963"
-        )
+private struct PreviewCatalogService: CatalogServing {
+    func browseProducts() async throws -> [Product] {
+        [PreviewData.product]
+    }
+
+    func searchProducts(query: String) async throws -> [Product] {
+        [PreviewData.product]
+    }
+
+    func products(forBrand brand: String) async throws -> [Product] {
+        [PreviewData.product]
+    }
+
+    func listBrands() async throws -> [ProductBrand] {
+        [
+            ProductBrand(name: "Wooting", matchCount: 12),
+            ProductBrand(name: "Keychron", matchCount: 8),
+        ]
     }
 }
 

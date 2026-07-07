@@ -5,28 +5,12 @@ struct DiscoverProductsContent: View {
     @Binding var showsAllPopular: Bool
     @Binding var showsAllRecommended: Bool
     let transitionNamespace: Namespace.ID
-    let selectCategory: (ProductSearchCategory) -> Void
 
     var body: some View {
-        ProductCategoryCarousel(
-            selectedCategory: viewModel.selectedCategory,
-            isDisabled: viewModel.isSearchingProducts,
-            selectCategory: selectCategory
-        )
-
         if viewModel.isSearchingProducts {
             AppLoadingIndicator("Finding something fun…", size: 32)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 32)
-        }
-
-        if let correctedQuery = viewModel.correctedQuery {
-            Label(
-                "Showing results for \(correctedQuery)",
-                systemImage: "text.magnifyingglass"
-            )
-            .font(.subheadline)
-            .foregroundStyle(.secondary)
         }
 
         if viewModel.hasSearchedProducts,
@@ -39,22 +23,45 @@ struct DiscoverProductsContent: View {
                     systemImage: "magnifyingglass"
                 )
             } description: {
-                Text("Try another product, brand, or category.")
+                Text("Try another product or brand.")
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 32)
+        }
+
+        if !viewModel.hasSearchedProducts,
+           viewModel.products.isEmpty,
+           viewModel.errorMessage == nil,
+           !viewModel.isSearchingProducts {
+            ContentUnavailableView {
+                BrandEmptyStateLabel(
+                    title: "Catalog is Empty",
+                    systemImage: "shippingbox"
+                )
+            } description: {
+                Text(
+                    "Import products from Safari or paste a product URL to build the catalog."
+                )
+            } actions: {
+                Button(
+                    "Import Product",
+                    systemImage: "link",
+                    action: showURLImport
+                )
+                .buttonStyle(.glassProminent)
+                .tint(Color.brandPrimary)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 32)
         }
 
         if !viewModel.brands.isEmpty, !viewModel.isSearchingProducts {
-            BrandChipCarousel(
-                brands: viewModel.brands,
-                selection: viewModel.brandSelection
-            )
+            BrandChipCarousel(brands: viewModel.brands)
         }
 
         if !viewModel.popularProducts.isEmpty {
             DiscoverProductSection(
-                title: "Popular Right Now",
+                title: "Fresh Imports",
                 products: viewModel.popularProducts,
                 collapsedCount: 2,
                 showsAll: $showsAllPopular,
@@ -64,12 +71,16 @@ struct DiscoverProductsContent: View {
 
         if !viewModel.recommendedProducts.isEmpty {
             DiscoverProductSection(
-                title: "Recommended for You",
+                title: "More from the Catalog",
                 products: viewModel.recommendedProducts,
                 collapsedCount: 4,
                 showsAll: $showsAllRecommended,
                 transitionNamespace: transitionNamespace
             )
         }
+    }
+
+    private func showURLImport() {
+        viewModel.mode = .url
     }
 }

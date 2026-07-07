@@ -13,7 +13,7 @@ struct ProductSearchForm: View {
                 .onSubmit(searchAction)
 
             Button(
-                "Search eBay",
+                "Search Catalog",
                 systemImage: "magnifyingglass",
                 action: searchAction
             )
@@ -22,7 +22,7 @@ struct ProductSearchForm: View {
         } header: {
             Text("Product Search")
         } footer: {
-            Text("USD listings convert to WanderCoins at a 1:1 rate.")
+            Text("Search imported products by title or brand.")
         }
         .brandListRow()
     }

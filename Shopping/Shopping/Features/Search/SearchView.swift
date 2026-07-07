@@ -19,8 +19,7 @@ struct SearchView: View {
                                 viewModel: viewModel,
                                 showsAllPopular: $showsAllPopular,
                                 showsAllRecommended: $showsAllRecommended,
-                                transitionNamespace: productTransition,
-                                selectCategory: searchCategory
+                                transitionNamespace: productTransition
                             )
                         } else {
                             DiscoverURLImportContent(
@@ -39,6 +38,9 @@ struct SearchView: View {
                 }
                 .scrollBounceBehavior(.always)
                 .scrollDismissesKeyboard(.interactively)
+                .refreshable {
+                    await viewModel.resetToCatalog(using: appModel)
+                }
                 .brandPageBackground()
 
                 DiscoverSearchHeader(
@@ -50,9 +52,9 @@ struct SearchView: View {
                 .padding(.top, 8)
             }
             .appPageTitle("Discover")
-            .navigationDestination(for: BrandSelection.self) { selection in
+            .navigationDestination(for: ProductBrand.self) { brand in
                 BrandProductsView(
-                    selection: selection,
+                    brand: brand,
                     transitionNamespace: productTransition
                 )
             }
@@ -97,18 +99,6 @@ struct SearchView: View {
     private func searchProducts() {
         Task {
             await viewModel.searchProducts(using: appModel)
-        }
-    }
-
-    private func searchCategory(_ category: ProductSearchCategory) {
-        showsAllPopular = false
-        showsAllRecommended = false
-
-        Task {
-            await viewModel.searchProducts(
-                in: category,
-                using: appModel
-            )
         }
     }
 }

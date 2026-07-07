@@ -10,7 +10,7 @@ struct ProductShareImportTests {
             authService: UnavailableAuthService(),
             walletService: UnavailableWalletService(),
             productImportService: UnavailableProductImportService(),
-            productSearchService: UnavailableProductSearchService(),
+            catalogService: UnavailableCatalogService(),
             ordersService: UnavailableOrdersService(),
             checkoutService: UnavailableCheckoutService(),
             wishlistService: UnavailableWishlistService()
@@ -40,7 +40,7 @@ struct ProductShareImportTests {
             authService: UnavailableAuthService(),
             walletService: UnavailableWalletService(),
             productImportService: UnavailableProductImportService(),
-            productSearchService: UnavailableProductSearchService(),
+            catalogService: UnavailableCatalogService(),
             ordersService: UnavailableOrdersService(),
             checkoutService: UnavailableCheckoutService(),
             wishlistService: UnavailableWishlistService()

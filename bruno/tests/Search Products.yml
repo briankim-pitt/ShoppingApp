@@ -30,8 +30,6 @@ settings:
   maxRedirects: 5
 
 docs: >-
-  Searches eBay by product or brand name, caches normalized listings in
-  products, and returns Product objects that can be added directly to the
-  cart. The response includes "brands" refinements and a
-  "dominant_category_id". Pass optional "brand" (and "category_id" from a
-  prior response's dominant_category_id) to browse products for one brand.
+  Deprecated manual test for the eBay-backed search-products Edge Function.
+  The Swift app now reads Discover, search, and brand pages from imported
+  products in PostgREST instead of calling this endpoint.

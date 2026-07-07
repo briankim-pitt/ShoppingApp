@@ -3,7 +3,7 @@ import SwiftUI
 struct BrandProductsView: View {
     @Environment(AppModel.self) private var appModel
 
-    let selection: BrandSelection
+    let brand: ProductBrand
     let transitionNamespace: Namespace.ID
 
     @State private var viewModel = BrandProductsViewModel()
@@ -12,7 +12,7 @@ struct BrandProductsView: View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 24) {
                 if viewModel.isLoading {
-                    AppLoadingIndicator("Browsing \(selection.name)…", size: 32)
+                    AppLoadingIndicator("Browsing \(brand.name)…", size: 32)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 32)
                 } else if let errorMessage = viewModel.errorMessage {
@@ -40,7 +40,7 @@ struct BrandProductsView: View {
                             systemImage: "tag"
                         )
                     } description: {
-                        Text("No \(selection.name) products are available right now.")
+                        Text("No \(brand.name) products are available right now.")
                     }
                     .containerRelativeFrame(.vertical)
                 } else {
@@ -68,15 +68,15 @@ struct BrandProductsView: View {
         }
         .scrollBounceBehavior(.always)
         .brandPageBackground()
-        .appPageTitle(verbatim: selection.name)
+        .appPageTitle(verbatim: brand.name)
         .task {
-            await viewModel.load(selection: selection, using: appModel)
+            await viewModel.load(brand: brand, using: appModel)
         }
     }
 
     private func retry() {
         Task {
-            await viewModel.retry(selection: selection, using: appModel)
+            await viewModel.retry(brand: brand, using: appModel)
         }
     }
 }
@@ -86,7 +86,7 @@ struct BrandProductsView: View {
 
     NavigationStack {
         BrandProductsView(
-            selection: BrandSelection(name: "Wooting", categoryID: nil),
+            brand: ProductBrand(name: "Wooting", matchCount: 12),
             transitionNamespace: namespace
         )
     }

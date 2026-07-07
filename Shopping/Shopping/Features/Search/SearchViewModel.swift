@@ -5,14 +5,11 @@ import Observation
 @Observable
 final class SearchViewModel {
     var mode: SearchMode = .products
-    var selectedCategory: ProductSearchCategory = .all
     var productQuery = ""
     var products: [Product] = []
     var brands: [ProductBrand] = []
     var isSearchingProducts = false
     var hasSearchedProducts = false
-    var correctedQuery: String?
-    private var dominantCategoryID: String?
     var productURL = ""
     var isImporting = false
     var result: ProductImportResult?
@@ -66,30 +63,32 @@ final class SearchViewModel {
     func searchProducts(using appModel: AppModel) async {
         guard canSearchProducts else { return }
 
-        await performProductSearch(
-            query: trimmedProductQuery,
-            using: appModel
-        )
-    }
+        isSearchingProducts = true
+        hasSearchedProducts = true
+        errorMessage = nil
+        defer { isSearchingProducts = false }
 
-    func searchProducts(
-        in category: ProductSearchCategory,
-        using appModel: AppModel
-    ) async {
-        guard !isSearchingProducts else { return }
-
-        selectedCategory = category
-        await performProductSearch(
-            query: category.searchQuery,
-            using: appModel
-        )
+        do {
+            products = try await appModel.searchProducts(
+                query: trimmedProductQuery
+            )
+        } catch {
+            products = []
+            errorMessage = error.localizedDescription
+        }
     }
 
     func loadInitialProducts(using appModel: AppModel) async {
         guard !hasLoadedInitialProducts else { return }
 
         hasLoadedInitialProducts = true
-        await searchProducts(in: .all, using: appModel)
+        await loadCatalog(using: appModel)
+    }
+
+    func resetToCatalog(using appModel: AppModel) async {
+        productQuery = ""
+        hasSearchedProducts = false
+        await loadCatalog(using: appModel)
     }
 
     var popularProducts: [Product] {
@@ -100,36 +99,27 @@ final class SearchViewModel {
         Array(products.dropFirst(6))
     }
 
-    private func performProductSearch(
-        query: String,
-        using appModel: AppModel
-    ) async {
+    private func loadCatalog(using appModel: AppModel) async {
+        guard !isSearchingProducts else { return }
+
         isSearchingProducts = true
-        hasSearchedProducts = true
         errorMessage = nil
         defer { isSearchingProducts = false }
 
+        async let loadedProducts = appModel.browseProducts()
+        async let loadedBrands = loadBrands(using: appModel)
+
         do {
-            let response = try await appModel.searchProducts(
-                query: query
-            )
-            products = response.products
-            brands = response.brandRefinements
-            dominantCategoryID = response.dominantCategoryID
-            correctedQuery = response.correctedQuery
+            products = try await loadedProducts
+            brands = await loadedBrands
         } catch {
             products = []
             brands = []
-            dominantCategoryID = nil
-            correctedQuery = nil
             errorMessage = error.localizedDescription
         }
     }
 
-    func brandSelection(for brand: ProductBrand) -> BrandSelection {
-        BrandSelection(
-            name: brand.name,
-            categoryID: dominantCategoryID
-        )
+    private func loadBrands(using appModel: AppModel) async -> [ProductBrand] {
+        (try? await appModel.listBrands()) ?? []
     }
 }
