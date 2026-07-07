@@ -37,13 +37,27 @@ final class SearchViewModel {
 
     func importProduct(using appModel: AppModel) async {
         guard let url = URL(string: trimmedURL), !isImporting else { return }
+        await importProduct(from: url, using: appModel)
+    }
+
+    func importProduct(
+        from url: URL,
+        extracted: ExtractedProductMetadata? = nil,
+        using appModel: AppModel
+    ) async {
+        guard !isImporting else { return }
 
         isImporting = true
         errorMessage = nil
+        mode = .url
+        productURL = url.absoluteString
         defer { isImporting = false }
 
         do {
-            result = try await appModel.importProduct(from: url)
+            result = try await appModel.importProduct(
+                from: url,
+                extracted: extracted
+            )
         } catch {
             errorMessage = error.localizedDescription
         }

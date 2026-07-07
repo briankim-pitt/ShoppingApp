@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "WanderCart Import",
+  "version": "1.0",
+  "description": "Import the product you are viewing into WanderCart.",
+  "permissions": ["activeTab", "scripting"],
+  "action": {
+    "default_title": "Import to WanderCart",
+    "default_popup": "popup.html"
+  }
+}

@@ -16,6 +16,7 @@ final class AppModel {
     var wallet: VirtualWallet?
     var dailyCheckInStatus: DailyCheckInStatus?
     var selectedTab: MainTab = .home
+    var pendingProductImport: PendingProductImport?
     let cart: CartStore
 
     init(
@@ -98,8 +99,28 @@ final class AppModel {
         phase = .signedOut
     }
 
-    func importProduct(from url: URL) async throws -> ProductImportResult {
-        try await productImportService.importProduct(from: url)
+    func importProduct(
+        from url: URL,
+        extracted: ExtractedProductMetadata? = nil
+    ) async throws -> ProductImportResult {
+        try await productImportService.importProduct(
+            from: url,
+            extracted: extracted
+        )
+    }
+
+    func handleIncomingURL(_ url: URL) {
+        guard let pending = PendingProductImport(deepLink: url) else {
+            return
+        }
+
+        selectedTab = .search
+        pendingProductImport = pending
+    }
+
+    func consumePendingProductImport() -> PendingProductImport? {
+        defer { pendingProductImport = nil }
+        return pendingProductImport
     }
 
     func searchProducts(

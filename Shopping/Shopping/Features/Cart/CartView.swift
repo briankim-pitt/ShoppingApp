@@ -141,7 +141,10 @@ struct CartView: View {
                     HStack {
                         Spacer()
                         if viewModel.isCheckingOut {
-                            ProgressView()
+                            AppLoadingIndicator(
+                                accessibilityLabel: "Placing order",
+                                size: 22
+                            )
                         } else {
                             Label("Place Order", systemImage: "cart")
                         }

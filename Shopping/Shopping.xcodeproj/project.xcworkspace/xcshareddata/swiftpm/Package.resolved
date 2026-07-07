@@ -1,6 +1,15 @@
 {
-  "originHash" : "ccc727310637079b7355ccf59e7d153c26677020c1a43e177b78cc9df7963c0f",
+  "originHash" : "026d7f84ebe0988f5e0d615db4557dbad01233a5d8ad7425d2fc1628f9c7d884",
   "pins" : [
+    {
+      "identity" : "matrix-swift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/mana-am/matrix-swift",
+      "state" : {
+        "revision" : "ab2a0d8edfef395ccf0fce4dc7594310eba6ea30",
+        "version" : "0.1.1"
+      }
+    },
     {
       "identity" : "supabase-swift",
       "kind" : "remoteSourceControl",

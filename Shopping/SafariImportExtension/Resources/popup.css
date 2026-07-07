@@ -1,0 +1,48 @@
+:root {
+  color-scheme: light dark;
+  --brand-primary: #7b4dff;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, system-ui, sans-serif;
+  min-width: 260px;
+}
+
+main {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 17px;
+}
+
+#page-host {
+  margin: 0;
+  font-size: 13px;
+  color: color-mix(in srgb, currentColor 60%, transparent);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#status {
+  margin: 0;
+  font-size: 14px;
+}
+
+.import-button {
+  display: block;
+  padding: 12px;
+  border-radius: 999px;
+  background: var(--brand-primary);
+  color: white;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+}

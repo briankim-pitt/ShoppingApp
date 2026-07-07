@@ -16,7 +16,7 @@ struct DiscoverURLImportContent: View {
             .foregroundStyle(.secondary)
 
             if viewModel.isImporting {
-                ProgressView("Importing product…")
+                AppLoadingIndicator("Importing product…", size: 32)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 32)
             }

@@ -15,7 +15,7 @@ struct DiscoverProductsContent: View {
         )
 
         if viewModel.isSearchingProducts {
-            ProgressView("Finding something fun…")
+            AppLoadingIndicator("Finding something fun…", size: 32)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 32)
         }

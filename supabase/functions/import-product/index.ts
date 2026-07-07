@@ -4,8 +4,18 @@ import { createClient } from "npm:@supabase/supabase-js@2.108.2";
 import * as cheerio from "npm:cheerio@1.2.0";
 import { z } from "npm:zod@4.4.3";
 
+const extractedSchema = z.object({
+  title: z.string().trim().min(1).max(300),
+  description: z.string().trim().min(1).max(1000).nullish(),
+  image_url: z.string().url().max(2000).nullish(),
+  price_amount: z.number().nonnegative().finite().nullish(),
+  currency_code: z.string().trim().length(3).nullish(),
+  brand: z.string().trim().min(1).max(120).nullish(),
+});
+
 const requestSchema = z.object({
   url: z.string().url(),
+  extracted: extractedSchema.optional(),
 });
 
 const blockedHostnames = new Set([
@@ -24,6 +34,7 @@ type ProductMetadata = {
   imageUrl: string | null;
   currencyCode: string | null;
   priceAmount: number | null;
+  brand: string | null;
   rawPayload: Record<string, unknown>;
 };
 
@@ -363,6 +374,7 @@ function extractMetadata(html: string, sourceUrl: string) {
     imageUrl,
     currencyCode,
     priceAmount,
+    brand: null,
     rawPayload: {
       fetchedAt: new Date().toISOString(),
       title,
@@ -374,6 +386,55 @@ function extractMetadata(html: string, sourceUrl: string) {
   } satisfies ProductMetadata;
 }
 
+function httpsImageUrl(rawUrl: string | null | undefined) {
+  if (!rawUrl) {
+    return null;
+  }
+
+  try {
+    const url = new URL(rawUrl);
+    return url.protocol === "https:" && !isBlockedHostname(url.hostname)
+      ? url.toString()
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function metadataFromExtracted(
+  extracted: z.infer<typeof extractedSchema>,
+  sourceUrl: string,
+) {
+  const title = extracted.title;
+  const description = extracted.description ?? null;
+  const imageUrl = httpsImageUrl(extracted.image_url);
+  const currencyCode = normalizeCurrencyCode(extracted.currency_code ?? null);
+  const priceAmount = extracted.price_amount ?? null;
+  const brand = extracted.brand ?? null;
+
+  return {
+    canonicalUrl: sourceUrl,
+    sourceUrl,
+    sourceDomain: new URL(sourceUrl).hostname,
+    title,
+    description,
+    imageUrl,
+    currencyCode,
+    priceAmount,
+    brand,
+    rawPayload: {
+      fetchedAt: new Date().toISOString(),
+      extractionSource: "client",
+      title,
+      description,
+      imageUrl,
+      currencyCode,
+      priceAmount,
+      brand,
+    },
+  } satisfies ProductMetadata;
+}
+
 async function fetchPage(url: string) {
   const response = await fetch(url, {
     method: "GET",
@@ -381,7 +442,11 @@ async function fetchPage(url: string) {
     signal: AbortSignal.timeout(8000),
     headers: {
       "accept": "text/html,application/xhtml+xml",
-      "user-agent": "ShoppingAppBot/0.1 (+https://shoppingapp.local/import)",
+      "accept-language": "en-US,en;q=0.9",
+      // Many storefronts reject obvious bot user agents outright; imports are
+      // single-page fetches made on behalf of the requesting user.
+      "user-agent":
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",
     },
   });
 
@@ -444,12 +509,14 @@ export default {
 
     try {
       sourceUrl = normalizeUrl(payload.url);
-      const html = await fetchPage(sourceUrl);
-      const metadata = extractMetadata(html, sourceUrl);
+      const metadata = payload.extracted
+        ? metadataFromExtracted(payload.extracted, sourceUrl)
+        : extractMetadata(await fetchPage(sourceUrl), sourceUrl);
 
       const { data: product, error: productError } = await admin
         .from("products")
         .upsert({
+          ...metadata.brand ? { brand: metadata.brand } : {},
           canonical_url: metadata.canonicalUrl,
           source_domain: metadata.sourceDomain,
           title: metadata.title,

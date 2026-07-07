@@ -12,7 +12,7 @@ struct BrandProductsView: View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 24) {
                 if viewModel.isLoading {
-                    ProgressView("Browsing \(selection.name)…")
+                    AppLoadingIndicator("Browsing \(selection.name)…", size: 32)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 32)
                 } else if let errorMessage = viewModel.errorMessage {

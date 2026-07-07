@@ -188,7 +188,10 @@ private struct PreviewWalletService: WalletServing {
 }
 
 private struct PreviewProductImportService: ProductImportServing {
-    func importProduct(from url: URL) async throws -> ProductImportResult {
+    func importProduct(
+        from url: URL,
+        extracted: ExtractedProductMetadata?
+    ) async throws -> ProductImportResult {
         let product = PreviewData.product
 
         return ProductImportResult(

@@ -22,16 +22,18 @@ struct SupabaseProductSearchService: ProductSearchServing {
         brand: String?,
         categoryID: String?
     ) async throws -> ProductSearchResponse {
-        try await client.functions.invoke(
-            "search-products",
-            options: FunctionInvokeOptions(
-                body: SearchRequest(
-                    query: query,
-                    limit: 20,
-                    brand: brand,
-                    categoryID: categoryID
+        try await withReadableEdgeFunctionError {
+            try await client.functions.invoke(
+                "search-products",
+                options: FunctionInvokeOptions(
+                    body: SearchRequest(
+                        query: query,
+                        limit: 20,
+                        brand: brand,
+                        categoryID: categoryID
+                    )
                 )
             )
-        )
+        }
     }
 }

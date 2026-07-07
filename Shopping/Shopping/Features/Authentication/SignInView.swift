@@ -62,7 +62,10 @@ struct SignInView: View {
                         HStack {
                             Spacer()
                             if viewModel.isSubmitting {
-                                ProgressView()
+                                AppLoadingIndicator(
+                                    accessibilityLabel: "Signing in",
+                                    size: 22
+                                )
                             } else {
                                 Text(viewModel.mode.title)
                             }

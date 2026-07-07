@@ -11,8 +11,7 @@ struct RootView: View {
             Group {
                 switch appModel.phase {
                 case .launching:
-                    ProgressView()
-                        .controlSize(.large)
+                    AppLoadingIndicator(size: 36)
                 case .signedOut:
                     SignInView()
                 case .ready:

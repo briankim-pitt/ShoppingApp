@@ -69,6 +69,12 @@ struct SearchView: View {
             }
             .task {
                 await viewModel.loadInitialProducts(using: appModel)
+                await importPendingProductURL()
+            }
+            .onChange(of: appModel.pendingProductImport) {
+                Task {
+                    await importPendingProductURL()
+                }
             }
         }
     }
@@ -77,6 +83,15 @@ struct SearchView: View {
         Task {
             await viewModel.importProduct(using: appModel)
         }
+    }
+
+    private func importPendingProductURL() async {
+        guard let pending = appModel.consumePendingProductImport() else { return }
+        await viewModel.importProduct(
+            from: pending.url,
+            extracted: pending.extracted,
+            using: appModel
+        )
     }
 
     private func searchProducts() {

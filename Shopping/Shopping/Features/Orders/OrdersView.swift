@@ -19,9 +19,7 @@ struct OrdersView: View {
                     .tint(Color.brandPrimary)
 
                     if viewModel.isLoading && viewModel.orders.isEmpty {
-                        ProgressView()
-                            .controlSize(.large)
-                            .tint(Color.brandPrimary)
+                        AppLoadingIndicator(size: 36)
                             .containerRelativeFrame(.vertical)
                     } else if let errorMessage = viewModel.errorMessage,
                               viewModel.orders.isEmpty {

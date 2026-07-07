@@ -23,6 +23,12 @@ struct ShoppingApp: App {
         WindowGroup {
             RootView()
                 .environment(appModel)
+                // Locked to light mode for now. The dark-mode color logic is
+                // preserved; remove this modifier to re-enable system theming.
+                .preferredColorScheme(.light)
+                .onOpenURL { url in
+                    appModel.handleIncomingURL(url)
+                }
                 .task {
                     await appModel.start()
             }
