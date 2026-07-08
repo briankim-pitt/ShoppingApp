@@ -2,51 +2,129 @@ import SwiftUI
 
 struct ProductPurchaseGlassBar: View {
     let priceText: String
+    let quantity: Int
     let isInCart: Bool
     let isInWishlist: Bool
     let isSavingToWishlist: Bool
+    let decrementQuantity: () -> Void
+    let incrementQuantity: () -> Void
     let addToCart: () -> Void
+    let undoAddToCart: () -> Void
     let addToWishlist: () -> Void
 
     var body: some View {
-        HStack(spacing: 10) {
-            Label {
-                Text(priceText)
-            } icon: {
-                WanderCoinIcon(size: 18)
+        VStack(spacing: 10) {
+            HStack(spacing: 12) {
+                pricePill
+                quantityPill
             }
-            .bold()
-            .padding(.horizontal, 14)
-            .frame(minHeight: 44)
-            .glassEffect(.regular)
 
-            Spacer(minLength: 0)
+            HStack(spacing: 12) {
+                wishlistButton
+                addToCartButton
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 64)
+        }
+        .padding(.horizontal, 28)
+        .padding(.top, 12)
+        .padding(.bottom, 10)
+    }
 
+    private var pricePill: some View {
+        Label {
+            Text(priceText)
+        } icon: {
+            WanderCoinIcon(size: 18)
+        }
+        .bold()
+        .padding(.horizontal, 16)
+        .frame(maxWidth: .infinity)
+        .frame(height: 52)
+        .glassEffect(.regular)
+    }
+
+    private var quantityPill: some View {
+        HStack(spacing: 12) {
             Button(
-                isInWishlist ? "Saved to Wishlist" : "Add to Wishlist",
-                systemImage: wishlistSystemImage,
-                action: addToWishlist
+                "Decrease Quantity",
+                systemImage: "minus",
+                action: decrementQuantity
             )
             .labelStyle(.iconOnly)
-            .frame(width: 44, height: 44)
-            .buttonStyle(.glass)
-            .buttonBorderShape(.circle)
-            .tint(isInWishlist ? Color.brandPrimary : nil)
-            .disabled(isInWishlist || isSavingToWishlist)
+            .frame(width: 36, height: 36)
+            .buttonStyle(.plain)
+            .contentShape(.circle)
+            .disabled(quantity <= 1)
+            .accessibilityLabel("Decrease quantity")
+
+            Text("\(quantity)")
+                .font(.headline.monospacedDigit())
+                .frame(minWidth: 24)
+                .accessibilityLabel("Quantity \(quantity)")
 
             Button(
-                isInCart ? "Added to Cart" : "Add to Cart",
-                systemImage: isInCart ? "checkmark" : "cart.badge.plus",
-                action: addToCart
+                "Increase Quantity",
+                systemImage: "plus",
+                action: incrementQuantity
             )
-            .buttonStyle(.glassProminent)
-            .buttonBorderShape(.capsule)
-            .controlSize(.large)
-            .tint(Color.brandPrimary)
-            .disabled(isInCart)
+            .labelStyle(.iconOnly)
+            .frame(width: 36, height: 36)
+            .buttonStyle(.plain)
+            .contentShape(.circle)
+            .disabled(quantity >= 99)
+            .accessibilityLabel("Increase quantity")
         }
-        .padding(.horizontal)
-        .padding(.bottom, 8)
+        .font(.headline)
+        .padding(.horizontal, 8)
+        .frame(maxWidth: .infinity)
+        .frame(height: 52)
+        .glassEffect(.regular)
+    }
+
+    private var wishlistButton: some View {
+        Button(action: addToWishlist) {
+            Image(systemName: wishlistSystemImage)
+                .font(.headline)
+                .frame(width: 36, height: 36)
+        }
+        .frame(width: 36, height: 36)
+        .buttonStyle(.glass)
+        .buttonBorderShape(.circle)
+        .tint(isInWishlist ? Color.brandPrimary : nil)
+        .disabled(isInWishlist || isSavingToWishlist)
+        .accessibilityLabel(
+            isInWishlist ? "Saved to Wishlist" : "Add to Wishlist"
+        )
+    }
+
+    private var addToCartButton: some View {
+        Button(action: addToCart) {
+            Text(isInCart ? "Added to Cart" : "Add to Cart")
+                .font(.headline)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity)
+                .frame(height: 36)
+        }
+        .buttonStyle(.glassProminent)
+        .buttonBorderShape(.capsule)
+        .controlSize(.large)
+        .tint(Color.brandPrimary)
+        .disabled(isInCart)
+        .overlay(alignment: .trailing) {
+            if isInCart {
+                Button(
+                    "Undo Add to Cart",
+                    systemImage: "arrow.uturn.backward",
+                    action: undoAddToCart
+                )
+                .labelStyle(.iconOnly)
+                .frame(width: 52, height: 52)
+                .buttonStyle(.glass)
+                .buttonBorderShape(.circle)
+                .padding(.trailing, 6)
+            }
+        }
     }
 
     private var wishlistSystemImage: String {

@@ -19,14 +19,19 @@ final class CartStore {
         items.contains { $0.id == productID }
     }
 
-    func add(_ product: Product) {
+    func add(_ product: Product, quantity: Int = 1) {
+        let clampedQuantity = min(max(quantity, 1), 99)
+
         if let index = items.firstIndex(where: { $0.id == product.id }) {
-            items[index].quantity = min(items[index].quantity + 1, 99)
+            items[index].quantity = min(
+                items[index].quantity + clampedQuantity,
+                99
+            )
         } else {
             items.append(
                 CartItem(
                     product: product,
-                    quantity: 1,
+                    quantity: clampedQuantity,
                     manualCoinAmount: nil
                 )
             )

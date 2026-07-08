@@ -7,6 +7,7 @@ struct ProductDetailView: View {
     @State private var wishlistErrorMessage = ""
     @State private var isShowingWishlistError = false
     @State private var containerSize: CGSize = .zero
+    @State private var quantity = 1
 
     let product: Product
 
@@ -65,11 +66,15 @@ struct ProductDetailView: View {
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             ProductPurchaseGlassBar(
-                priceText: product.wanderCoinPriceText,
+                priceText: totalPriceText,
+                quantity: quantity,
                 isInCart: isInCart,
                 isInWishlist: isInWishlist,
                 isSavingToWishlist: isSavingToWishlist,
+                decrementQuantity: decrementQuantity,
+                incrementQuantity: incrementQuantity,
                 addToCart: addToCart,
+                undoAddToCart: undoAddToCart,
                 addToWishlist: addToWishlist
             )
         }
@@ -79,8 +84,29 @@ struct ProductDetailView: View {
         appModel.cart.contains(productID: product.id)
     }
 
+    private var totalPriceText: String {
+        guard let unitPrice = product.wanderCoinPriceAmount else {
+            return "Set coin price in cart"
+        }
+
+        return (unitPrice.roundedUpToWholeCoin * Decimal(quantity))
+            .wanderCoinText
+    }
+
     private func addToCart() {
-        appModel.cart.add(product)
+        appModel.cart.add(product, quantity: quantity)
+    }
+
+    private func undoAddToCart() {
+        appModel.cart.remove(productID: product.id)
+    }
+
+    private func decrementQuantity() {
+        quantity = max(quantity - 1, 1)
+    }
+
+    private func incrementQuantity() {
+        quantity = min(quantity + 1, 99)
     }
 
     private func loadWishlistState() async {
