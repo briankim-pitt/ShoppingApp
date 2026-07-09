@@ -7,6 +7,8 @@ struct HomeView: View {
     @State private var isShowingCheckInError = false
     @State private var checkInErrorMessage = ""
     @State private var isShowingSettings = false
+    @State private var scrollOffset: CGFloat = 0
+    @Namespace private var productTransition
 
     private var recentOrders: [VirtualOrder] {
         Array(orders.prefix(3))
@@ -14,25 +16,59 @@ struct HomeView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 24) {
-                    greetingSection
-                    DailyCheckInCard(
-                        status: appModel.dailyCheckInStatus,
-                        isClaiming: isClaimingDailyBonus,
-                        claim: claimDailyBonus
-                    )
-                    statsSection
+            ZStack {
+                Color.brandBackground
+                    .ignoresSafeArea()
 
-                    if !recentOrders.isEmpty {
-                        recentOrdersSection
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 24) {
+                        HomeHeroView(
+                            greeting: greeting,
+                            displayName: displayName,
+                            walletBalance: walletBalance,
+                            dailyCheckInStatus: appModel.dailyCheckInStatus,
+                            isClaimingDailyBonus: isClaimingDailyBonus,
+                            claimDailyBonus: claimDailyBonus,
+                            addCoin: appModel.addPreviewCoin,
+                            scrollOffset: scrollOffset
+                        )
+                        .padding(.horizontal, -20)
+                        .padding(.top, -12)
+
+                        statsSection
+
+                        if !appModel.recentlyViewed.products.isEmpty {
+                            recentlyViewedSection
+                        }
+
+                        if !recentOrders.isEmpty {
+                            recentOrdersSection
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 12)
+                    .padding(.bottom, 32)
+                    .background(alignment: .top) {
+                        HomeAnimatedGradient()
+                            .frame(height: 640)
+                            .padding(.horizontal, -32)
+                            .offset(y: -34)
+                            .allowsHitTesting(false)
                     }
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 12)
-                .padding(.bottom, 32)
+                .scrollContentBackground(.hidden)
+                .onScrollGeometryChange(for: CGFloat.self) { geometry in
+                    geometry.contentOffset.y
+                } action: { _, newValue in
+                    scrollOffset = newValue
+                }
             }
-            .brandPageBackground()
+            .navigationDestination(for: Product.self) { product in
+                ProductDetailView(product: product)
+                    .navigationTransition(
+                        .zoom(sourceID: product.id, in: productTransition)
+                    )
+            }
             .navigationTitle("")
             .toolbarTitleDisplayMode(.inline)
             .toolbar {
@@ -49,10 +85,8 @@ struct HomeView: View {
                     .labelStyle(.iconOnly)
                 }
             }
-            .sheet(isPresented: $isShowingSettings) {
-                SettingsView()
-            }
             .task {
+                await appModel.loadUserEmail()
                 await loadOrders()
             }
             .refreshable {
@@ -66,25 +100,12 @@ struct HomeView: View {
             } message: {
                 Text(checkInErrorMessage)
             }
-        }
-    }
-
-    private var greetingSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(greeting)
-                .font(.title3.weight(.semibold))
-
-            HStack(spacing: 6) {
-                Text("You have")
-                    .foregroundStyle(.secondary)
-
-                Text(walletBalance.wanderCoinNumber)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(Color.brandPrimary)
-
-                WanderCoinIcon(size: 18)
+            // Applied after .refreshable so Settings, presented below, sits
+            // outside its \.refresh environment and has no pull-to-refresh
+            // of its own.
+            .sheet(isPresented: $isShowingSettings) {
+                SettingsView()
             }
-            .font(.subheadline)
         }
     }
 
@@ -129,6 +150,40 @@ struct HomeView: View {
         }
     }
 
+    private var recentlyViewedSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Recently Viewed")
+                    .font(.headline)
+
+                Spacer()
+
+                Button("Clear") {
+                    appModel.recentlyViewed.clear()
+                }
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Color.brandPrimary)
+            }
+
+            ScrollView(.horizontal) {
+                LazyHStack(spacing: 14) {
+                    ForEach(appModel.recentlyViewed.products) { product in
+                        NavigationLink(value: product) {
+                            RecentlyViewedProductCard(
+                                product: product,
+                                transitionNamespace: productTransition
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .scrollTargetLayout()
+            }
+            .scrollClipDisabled()
+            .scrollIndicators(.hidden)
+        }
+    }
+
     private var recentOrdersSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
@@ -157,6 +212,25 @@ struct HomeView: View {
 
     private var walletBalance: Decimal {
         appModel.wallet?.balance.amount ?? 0
+    }
+
+    private var displayName: String? {
+        guard let email = appModel.userEmail?.split(separator: "@").first else {
+            return nil
+        }
+
+        let cleaned = email
+            .replacingOccurrences(of: ".", with: " ")
+            .replacingOccurrences(of: "_", with: " ")
+            .replacingOccurrences(of: "-", with: " ")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard !cleaned.isEmpty else { return nil }
+
+        return cleaned
+            .split(separator: " ")
+            .map { $0.prefix(1).uppercased() + $0.dropFirst() }
+            .joined(separator: " ")
     }
 
     private var coinsSpent: Decimal {
@@ -232,7 +306,12 @@ private struct HomeStatTile: View {
         }
         .frame(maxWidth: .infinity, minHeight: 92, alignment: .leading)
         .padding(12)
-        .background(Color.brandPurpleSurface, in: .rect(cornerRadius: 8))
+        .background(Color(uiColor: .systemBackground), in: .rect(cornerRadius: 18))
+        .overlay {
+            RoundedRectangle(cornerRadius: 18)
+                .stroke(Color.brandPrimary.opacity(0.08))
+        }
+        .shadow(color: .black.opacity(0.035), radius: 14, y: 8)
         .accessibilityElement(children: .combine)
     }
 }

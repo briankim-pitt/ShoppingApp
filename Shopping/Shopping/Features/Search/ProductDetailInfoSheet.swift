@@ -42,13 +42,7 @@ struct ProductDetailInfoSheet: View {
         .padding(.top, 28)
         .padding(.bottom, 128)
         .background {
-            UnevenRoundedRectangle(
-                topLeadingRadius: 30,
-                bottomLeadingRadius: 0,
-                bottomTrailingRadius: 0,
-                topTrailingRadius: 30,
-                style: .continuous
-            )
+            RoundedRectangle(cornerRadius: 30, style: .continuous)
             .fill(Color(uiColor: .systemBackground))
         }
     }

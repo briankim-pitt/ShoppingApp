@@ -52,7 +52,9 @@ struct CartView: View {
                 Button("Cancel", role: .cancel) {}
             } message: {
                 if let total {
-                    Text("Your wallet will be charged \(total.wanderCoinText).")
+                    Text(
+                        "Your wallet will be charged \(total.wanderCoinText). You may be asked to confirm this simulated purchase."
+                    )
                 }
             }
             .confirmationDialog(
@@ -64,6 +66,16 @@ struct CartView: View {
                     appModel.cart.clear()
                 }
                 Button("Cancel", role: .cancel) {}
+            }
+            .sensoryFeedback(trigger: viewModel.authenticationHaptic) { _, haptic in
+                switch haptic {
+                case .success:
+                    .success
+                case .failure:
+                    .error
+                case nil:
+                    nil
+                }
             }
         }
     }

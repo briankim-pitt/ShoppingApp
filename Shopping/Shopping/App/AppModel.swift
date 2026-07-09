@@ -20,6 +20,7 @@ final class AppModel {
     var pendingProductImport: PendingProductImport?
     var deletedImportedProductID: UUID?
     let cart: CartStore
+    let recentlyViewed: RecentlyViewedStore
 
     init(
         authService: any AuthServing,
@@ -29,7 +30,8 @@ final class AppModel {
         ordersService: any OrdersServing,
         checkoutService: any CheckoutServing,
         wishlistService: any WishlistServing,
-        cart: CartStore = CartStore()
+        cart: CartStore = CartStore(),
+        recentlyViewed: RecentlyViewedStore = RecentlyViewedStore()
     ) {
         self.authService = authService
         self.walletService = walletService
@@ -39,6 +41,7 @@ final class AppModel {
         self.checkoutService = checkoutService
         self.wishlistService = wishlistService
         self.cart = cart
+        self.recentlyViewed = recentlyViewed
     }
 
     static func live() -> AppModel {
@@ -152,6 +155,10 @@ final class AppModel {
         try await catalogService.listBrands()
     }
 
+    func heroImage(forProductID productID: UUID) async throws -> URL? {
+        try await catalogService.heroImage(forProductID: productID)
+    }
+
     func listOrders() async throws -> [VirtualOrder] {
         try await ordersService.listOrders()
     }
@@ -188,6 +195,19 @@ final class AppModel {
             balance: status.balance,
             homeCurrencySelected: true,
             homeCurrencySelectedAt: wallet?.homeCurrencySelectedAt
+        )
+    }
+
+    func addPreviewCoin() {
+        guard let wallet else { return }
+
+        self.wallet = VirtualWallet(
+            balance: Money(
+                amount: wallet.balance.amount + 1,
+                currencyCode: wallet.balance.currencyCode
+            ),
+            homeCurrencySelected: wallet.homeCurrencySelected,
+            homeCurrencySelectedAt: wallet.homeCurrencySelectedAt
         )
     }
 

@@ -3,8 +3,6 @@ import SwiftUI
 struct SearchView: View {
     @Environment(AppModel.self) private var appModel
     @State private var viewModel = SearchViewModel()
-    @State private var showsAllPopular = false
-    @State private var showsAllRecommended = false
     @Namespace private var productTransition
 
     var body: some View {
@@ -17,8 +15,6 @@ struct SearchView: View {
                         if viewModel.mode == .products {
                             DiscoverProductsContent(
                                 viewModel: viewModel,
-                                showsAllPopular: $showsAllPopular,
-                                showsAllRecommended: $showsAllRecommended,
                                 transitionNamespace: productTransition
                             )
                         } else {

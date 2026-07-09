@@ -53,6 +53,7 @@ struct MainTabView: View {
             }
         }
         .tint(Color.brandPrimary)
+        .sensoryFeedback(.selection, trigger: appModel.selectedTab)
     }
 }
 

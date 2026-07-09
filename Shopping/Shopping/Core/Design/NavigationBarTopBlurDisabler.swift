@@ -28,11 +28,15 @@ struct NavigationBarTopBlurDisabler: UIViewControllerRepresentable {
     @MainActor
     final class Coordinator {
         private weak var navigationBar: UINavigationBar?
+        private weak var tabBar: UITabBar?
         private var standardAppearance: UINavigationBarAppearance?
         private var scrollEdgeAppearance: UINavigationBarAppearance?
         private var compactAppearance: UINavigationBarAppearance?
         private var compactScrollEdgeAppearance: UINavigationBarAppearance?
         private var isTranslucent: Bool?
+        private var tabStandardAppearance: UITabBarAppearance?
+        private var tabScrollEdgeAppearance: UITabBarAppearance?
+        private var tabIsTranslucent: Bool?
 
         func apply(to navigationController: UINavigationController?) {
             guard let navigationBar = navigationController?.navigationBar else {
@@ -66,33 +70,79 @@ struct NavigationBarTopBlurDisabler: UIViewControllerRepresentable {
                 of: navigationBar.compactScrollEdgeAppearance
                     ?? navigationBar.standardAppearance
             )
+
+            apply(to: navigationController?.tabBarController?.tabBar)
         }
 
         func restore() {
-            guard let navigationBar else { return }
-
-            if let standardAppearance {
-                navigationBar.standardAppearance = standardAppearance
+            if let navigationBar {
+                if let standardAppearance {
+                    navigationBar.standardAppearance = standardAppearance
+                }
+                navigationBar.scrollEdgeAppearance = scrollEdgeAppearance
+                navigationBar.compactAppearance = compactAppearance
+                navigationBar.compactScrollEdgeAppearance =
+                    compactScrollEdgeAppearance
+                if let isTranslucent {
+                    navigationBar.isTranslucent = isTranslucent
+                }
             }
-            navigationBar.scrollEdgeAppearance = scrollEdgeAppearance
-            navigationBar.compactAppearance = compactAppearance
-            navigationBar.compactScrollEdgeAppearance =
-                compactScrollEdgeAppearance
-            if let isTranslucent {
-                navigationBar.isTranslucent = isTranslucent
+
+            if let tabBar {
+                if let tabStandardAppearance {
+                    tabBar.standardAppearance = tabStandardAppearance
+                }
+                tabBar.scrollEdgeAppearance = tabScrollEdgeAppearance
+                if let tabIsTranslucent {
+                    tabBar.isTranslucent = tabIsTranslucent
+                }
             }
 
             self.navigationBar = nil
+            self.tabBar = nil
             standardAppearance = nil
             scrollEdgeAppearance = nil
             compactAppearance = nil
             compactScrollEdgeAppearance = nil
             isTranslucent = nil
+            tabStandardAppearance = nil
+            tabScrollEdgeAppearance = nil
+            tabIsTranslucent = nil
         }
 
         private func transparentCopy(
             of appearance: UINavigationBarAppearance
         ) -> UINavigationBarAppearance {
+            let copy = appearance.copy()
+            copy.backgroundEffect = nil
+            copy.backgroundColor = .clear
+            copy.shadowColor = .clear
+            copy.shadowImage = UIImage()
+            return copy
+        }
+
+        private func apply(to tabBar: UITabBar?) {
+            guard let tabBar else { return }
+
+            if self.tabBar !== tabBar {
+                self.tabBar = tabBar
+                tabStandardAppearance = tabBar.standardAppearance
+                tabScrollEdgeAppearance = tabBar.scrollEdgeAppearance
+                tabIsTranslucent = tabBar.isTranslucent
+            }
+
+            tabBar.isTranslucent = true
+            tabBar.standardAppearance = transparentCopy(
+                of: tabBar.standardAppearance
+            )
+            tabBar.scrollEdgeAppearance = transparentCopy(
+                of: tabBar.scrollEdgeAppearance ?? tabBar.standardAppearance
+            )
+        }
+
+        private func transparentCopy(
+            of appearance: UITabBarAppearance
+        ) -> UITabBarAppearance {
             let copy = appearance.copy()
             copy.backgroundEffect = nil
             copy.backgroundColor = .clear

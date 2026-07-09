@@ -2,7 +2,7 @@
 
 ## Face ID Checkout Confirmation
 
-**Status:** Deferred
+**Status:** Done (2026-07-09)
 
 Add an optional local authentication step immediately before submitting a
 virtual checkout.

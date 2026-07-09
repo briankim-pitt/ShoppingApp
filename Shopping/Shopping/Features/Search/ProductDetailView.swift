@@ -13,38 +13,47 @@ struct ProductDetailView: View {
     @State private var isShowingDeleteConfirmation = false
     @State private var containerSize: CGSize = .zero
     @State private var quantity = 1
+    @State private var hiResImageURL: URL?
 
     let product: Product
-    private let headerHeight: CGFloat = 420
 
     var body: some View {
-        ScrollView(.vertical, showsIndicators: false) {
-            VStack(spacing: 0) {
-                ProductDetailStretchyHeader(
-                    imageURL: product.imageURL,
-                    height: headerHeight
-                )
+        ZStack {
+            Color(uiColor: .systemGroupedBackground)
+                .ignoresSafeArea()
 
-                ProductDetailInfoSheet(product: product)
-                    .offset(y: -32)
-                    .padding(.bottom, -32)
+            ScrollView(.vertical, showsIndicators: false) {
+                VStack(spacing: 18) {
+                    ProductDetailImageShowcase(
+                        thumbnailURL: product.imageURL,
+                        hiResURL: hiResImageURL
+                    )
+
+                    ProductDetailInfoSheet(product: product)
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 14)
+                .padding(.bottom, 20)
+                .frame(
+                    maxWidth: containerSize.width > 0
+                        ? containerSize.width
+                        : nil
+                )
             }
-            .frame(maxWidth: containerSize.width > 0 ? containerSize.width : nil)
+            .scrollIndicators(.hidden)
         }
-        .coordinateSpace(name: "productDetailScroll")
-        .scrollIndicators(.hidden)
         .onGeometryChange(for: CGSize.self) { proxy in
             proxy.size
         } action: { size in
             containerSize = size
         }
-        .ignoresSafeArea(edges: .top)
         .background {
             Color(uiColor: .systemGroupedBackground)
             NavigationBarTopBlurDisabler()
         }
         .scrollContentBackground(.hidden)
         .toolbarBackground(.hidden, for: .navigationBar)
+        .toolbarBackground(.hidden, for: .tabBar)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 wishlistToolbarButton
@@ -55,7 +64,10 @@ struct ProductDetailView: View {
             }
         }
         .task(id: product.id) {
-            await loadWishlistState()
+            appModel.recentlyViewed.record(product)
+            async let wishlistState: Void = loadWishlistState()
+            async let heroImage: Void = loadHiResImage()
+            _ = await (wishlistState, heroImage)
         }
         .alert(
             "Couldn’t Update Wishlist",
@@ -85,7 +97,7 @@ struct ProductDetailView: View {
         } message: {
             Text("This removes the imported product from your catalog.")
         }
-        .safeAreaInset(edge: .bottom, spacing: 0) {
+        .overlay(alignment: .bottom) {
             ProductPurchaseGlassBar(
                 priceText: totalPriceText,
                 quantity: quantity,
@@ -95,6 +107,7 @@ struct ProductDetailView: View {
                 addToCart: addToCart,
                 undoAddToCart: undoAddToCart
             )
+            .padding(.bottom, 8)
         }
     }
 
@@ -186,6 +199,12 @@ struct ProductDetailView: View {
         isInWishlist = (try? await appModel.isInWishlist(
             productID: product.id
         )) ?? false
+    }
+
+    private func loadHiResImage() async {
+        // A failure just leaves the thumbnail showing; the showcase never
+        // blanks out waiting for this.
+        hiResImageURL = try? await appModel.heroImage(forProductID: product.id)
     }
 
     private func addToWishlist() {

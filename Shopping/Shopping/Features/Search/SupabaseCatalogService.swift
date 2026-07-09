@@ -2,6 +2,30 @@ import Foundation
 import Supabase
 
 struct SupabaseCatalogService: CatalogServing {
+    private struct SearchProductsRequest: Encodable {
+        let query: String
+    }
+
+    private struct SearchProductsResponse: Decodable {
+        let products: [Product]
+    }
+
+    private struct HeroImageRequest: Encodable {
+        let productID: UUID
+
+        enum CodingKeys: String, CodingKey {
+            case productID = "product_id"
+        }
+    }
+
+    private struct HeroImageResponse: Decodable {
+        let heroImageURL: URL?
+
+        enum CodingKeys: String, CodingKey {
+            case heroImageURL = "hero_image_url"
+        }
+    }
+
     private let productColumns = """
         id,
         canonical_url,
@@ -31,17 +55,19 @@ struct SupabaseCatalogService: CatalogServing {
     }
 
     func searchProducts(query: String) async throws -> [Product] {
-        let sanitized = sanitizedSearchQuery(query)
-        guard !sanitized.isEmpty else { return [] }
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.count >= 2 else { return [] }
 
-        return try await client
-            .from("products")
-            .select(productColumns)
-            .or("title.ilike.%\(sanitized)%,brand.ilike.%\(sanitized)%")
-            .order("last_imported_at", ascending: false)
-            .limit(50)
-            .execute()
-            .value
+        let response: SearchProductsResponse = try await withReadableEdgeFunctionError {
+            try await client.functions.invoke(
+                "search-products",
+                options: FunctionInvokeOptions(
+                    body: SearchProductsRequest(query: trimmed)
+                )
+            )
+        }
+
+        return response.products
     }
 
     func products(forBrand brand: String) async throws -> [Product] {
@@ -55,6 +81,19 @@ struct SupabaseCatalogService: CatalogServing {
             .value
     }
 
+    func heroImage(forProductID productID: UUID) async throws -> URL? {
+        let response: HeroImageResponse = try await withReadableEdgeFunctionError {
+            try await client.functions.invoke(
+                "product-hero-image",
+                options: FunctionInvokeOptions(
+                    body: HeroImageRequest(productID: productID)
+                )
+            )
+        }
+
+        return response.heroImageURL
+    }
+
     func listBrands() async throws -> [ProductBrand] {
         try await client
             .from("product_brands")
@@ -65,9 +104,4 @@ struct SupabaseCatalogService: CatalogServing {
             .value
     }
 
-    private func sanitizedSearchQuery(_ query: String) -> String {
-        query
-            .filter { !"%(),.".contains($0) }
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-    }
 }

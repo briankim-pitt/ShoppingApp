@@ -35,6 +35,58 @@ enum PreviewData {
         )
     }
 
+    nonisolated static var products: [Product] {
+        [
+            product,
+            Product(
+                id: UUID(uuidString: "A1B2C3D4-0000-0000-0000-000000000001") ?? UUID(),
+                canonicalURL: URL(string: "https://www.keychron.com/products/keychron-q1")
+                    ?? URL(fileURLWithPath: "/"),
+                sourceDomain: "keychron.com",
+                title: "Keychron Q1 Pro",
+                description: "Wireless custom mechanical keyboard with a gasket-mounted design.",
+                brand: "Keychron",
+                imageURL: URL(string: "https://www.keychron.com/cdn/shop/products/Keychron-Q1-Pro-QMK-VIA-wireless-custom-mechanical-keyboard.jpg"),
+                currencyCode: "USD",
+                priceAmount: 199.00,
+                wanderCoinPriceAmount: 199,
+                createdAt: .now,
+                updatedAt: .now,
+                lastImportedAt: .now
+            ),
+            Product(
+                id: UUID(uuidString: "A1B2C3D4-0000-0000-0000-000000000002") ?? UUID(),
+                canonicalURL: URL(string: "https://www.logitech.com/products/mice/mx-master-3s")
+                    ?? URL(fileURLWithPath: "/"),
+                sourceDomain: "logitech.com",
+                title: "Logitech MX Master 3S",
+                description: "Ergonomic wireless mouse with quiet clicks and fast scrolling.",
+                brand: "Logitech",
+                imageURL: URL(string: "https://resource.logitech.com/w_800,c_lpad,q_auto,f_auto,dpr_1.0/d_transparent.gif/content/dam/logitech/en/products/mice/mx-master-3s/gallery/mx-master-3s-mouse-top-view-graphite.png"),
+                currencyCode: "USD",
+                priceAmount: 99.99,
+                wanderCoinPriceAmount: 100,
+                createdAt: .now,
+                updatedAt: .now,
+                lastImportedAt: .now
+            ),
+        ]
+    }
+
+    @MainActor
+    static var recentlyViewedStore: RecentlyViewedStore {
+        // A throwaway suite keeps preview seeding out of the real defaults.
+        let suiteName = "preview.recentlyViewed"
+        let defaults = UserDefaults(suiteName: suiteName) ?? .standard
+        defaults.removePersistentDomain(forName: suiteName)
+
+        let store = RecentlyViewedStore(defaults: defaults)
+        for product in products.reversed() {
+            store.record(product)
+        }
+        return store
+    }
+
     static var orders: [VirtualOrder] {
         let now = Date.now
         let orderID = UUID(uuidString: "F1FE99E6-E99C-431A-ABA9-CCE5D2A9DE5B") ?? UUID()
@@ -117,7 +169,8 @@ enum PreviewData {
             catalogService: PreviewCatalogService(),
             ordersService: PreviewOrdersService(orders: orders),
             checkoutService: PreviewCheckoutService(),
-            wishlistService: PreviewWishlistService()
+            wishlistService: PreviewWishlistService(),
+            recentlyViewed: recentlyViewedStore
         )
         model.wallet = wallet
         model.dailyCheckInStatus = dailyCheckInStatus
@@ -235,6 +288,10 @@ private struct PreviewCatalogService: CatalogServing {
             ProductBrand(name: "Wooting", matchCount: 12),
             ProductBrand(name: "Keychron", matchCount: 8),
         ]
+    }
+
+    func heroImage(forProductID productID: UUID) async throws -> URL? {
+        PreviewData.product.imageURL
     }
 }
 

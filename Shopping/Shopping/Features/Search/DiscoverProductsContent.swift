@@ -2,13 +2,14 @@ import SwiftUI
 
 struct DiscoverProductsContent: View {
     @Bindable var viewModel: SearchViewModel
-    @Binding var showsAllPopular: Bool
-    @Binding var showsAllRecommended: Bool
     let transitionNamespace: Namespace.ID
 
     var body: some View {
         if viewModel.isSearchingProducts {
-            AppLoadingIndicator("Finding something fun…", size: 32)
+            AppLoadingIndicator(
+                accessibilityLabel: "Finding products",
+                size: 32
+            )
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 32)
         }
@@ -63,8 +64,6 @@ struct DiscoverProductsContent: View {
             DiscoverProductSection(
                 title: "Fresh Imports",
                 products: viewModel.popularProducts,
-                collapsedCount: 2,
-                showsAll: $showsAllPopular,
                 transitionNamespace: transitionNamespace
             )
         }
@@ -73,8 +72,6 @@ struct DiscoverProductsContent: View {
             DiscoverProductSection(
                 title: "More from the Catalog",
                 products: viewModel.recommendedProducts,
-                collapsedCount: 4,
-                showsAll: $showsAllRecommended,
                 transitionNamespace: transitionNamespace
             )
         }
