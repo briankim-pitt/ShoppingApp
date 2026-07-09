@@ -212,6 +212,9 @@ private struct PreviewProductImportService: ProductImportServing {
             )
         )
     }
+
+    func deleteImport(forProductID productID: UUID) async throws {
+    }
 }
 
 private struct PreviewCatalogService: CatalogServing {

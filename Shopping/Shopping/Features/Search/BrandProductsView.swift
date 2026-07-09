@@ -72,6 +72,10 @@ struct BrandProductsView: View {
         .task {
             await viewModel.load(brand: brand, using: appModel)
         }
+        .onChange(of: appModel.deletedImportedProductID) { _, productID in
+            guard let productID else { return }
+            viewModel.removeProduct(id: productID)
+        }
     }
 
     private func retry() {

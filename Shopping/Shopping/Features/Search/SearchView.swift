@@ -78,6 +78,10 @@ struct SearchView: View {
                     await importPendingProductURL()
                 }
             }
+            .onChange(of: appModel.deletedImportedProductID) { _, productID in
+                guard let productID else { return }
+                viewModel.removeProduct(id: productID)
+            }
         }
     }
 

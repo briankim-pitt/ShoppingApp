@@ -100,6 +100,10 @@ final class SearchViewModel {
         Array(products.dropFirst(6))
     }
 
+    func removeProduct(id: UUID) {
+        products.removeAll { $0.id == id }
+    }
+
     private func loadCatalog(using appModel: AppModel) async {
         guard !isSearchingProducts else { return }
 

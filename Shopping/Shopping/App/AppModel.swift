@@ -18,6 +18,7 @@ final class AppModel {
     var dailyCheckInStatus: DailyCheckInStatus?
     var selectedTab: MainTab = .home
     var pendingProductImport: PendingProductImport?
+    var deletedImportedProductID: UUID?
     let cart: CartStore
 
     init(
@@ -113,6 +114,12 @@ final class AppModel {
             from: url,
             extracted: extracted
         )
+    }
+
+    func deleteImport(forProductID productID: UUID) async throws {
+        try await productImportService.deleteImport(forProductID: productID)
+        cart.remove(productID: productID)
+        deletedImportedProductID = productID
     }
 
     func handleIncomingURL(_ url: URL) {

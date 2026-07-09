@@ -4,13 +4,10 @@ struct ProductPurchaseGlassBar: View {
     let priceText: String
     let quantity: Int
     let isInCart: Bool
-    let isInWishlist: Bool
-    let isSavingToWishlist: Bool
     let decrementQuantity: () -> Void
     let incrementQuantity: () -> Void
     let addToCart: () -> Void
     let undoAddToCart: () -> Void
-    let addToWishlist: () -> Void
 
     var body: some View {
         VStack(spacing: 10) {
@@ -20,7 +17,6 @@ struct ProductPurchaseGlassBar: View {
             }
 
             HStack(spacing: 12) {
-                wishlistButton
                 addToCartButton
             }
             .frame(maxWidth: .infinity)
@@ -82,22 +78,6 @@ struct ProductPurchaseGlassBar: View {
         .glassEffect(.regular)
     }
 
-    private var wishlistButton: some View {
-        Button(action: addToWishlist) {
-            Image(systemName: wishlistSystemImage)
-                .font(.headline)
-                .frame(width: 36, height: 36)
-        }
-        .frame(width: 36, height: 36)
-        .buttonStyle(.glass)
-        .buttonBorderShape(.circle)
-        .tint(isInWishlist ? Color.brandPrimary : nil)
-        .disabled(isInWishlist || isSavingToWishlist)
-        .accessibilityLabel(
-            isInWishlist ? "Saved to Wishlist" : "Add to Wishlist"
-        )
-    }
-
     private var addToCartButton: some View {
         Button(action: addToCart) {
             Text(isInCart ? "Added to Cart" : "Add to Cart")
@@ -124,16 +104,6 @@ struct ProductPurchaseGlassBar: View {
                 .buttonBorderShape(.circle)
                 .padding(.trailing, 6)
             }
-        }
-    }
-
-    private var wishlistSystemImage: String {
-        if isSavingToWishlist {
-            "clock"
-        } else if isInWishlist {
-            "heart.fill"
-        } else {
-            "heart"
         }
     }
 }

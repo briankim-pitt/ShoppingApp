@@ -5,6 +5,8 @@ protocol ProductImportServing: Sendable {
         from url: URL,
         extracted: ExtractedProductMetadata?
     ) async throws -> ProductImportResult
+
+    func deleteImport(forProductID productID: UUID) async throws
 }
 
 extension ProductImportServing {

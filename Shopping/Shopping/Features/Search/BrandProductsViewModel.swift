@@ -21,6 +21,10 @@ final class BrandProductsViewModel {
         await fetch(brand: brand, using: appModel)
     }
 
+    func removeProduct(id: UUID) {
+        products.removeAll { $0.id == id }
+    }
+
     private func fetch(
         brand: ProductBrand,
         using appModel: AppModel

@@ -11,16 +11,23 @@ struct ProductDetailHeroImage: View {
     @State private var didFail = false
 
     var body: some View {
-        ZStack(alignment: .bottom) {
+        ZStack {
             if let loadedImage {
-                loadedImageContent(loadedImage)
+                heroBackdrop(loadedImage)
             } else {
-                placeholderContent
+                Color(uiColor: .systemGroupedBackground)
             }
 
-            progressiveBlur
-            scrim
-            titleContent
+            VStack(spacing: 0) {
+                if let loadedImage {
+                    loadedImageContent(loadedImage)
+                } else {
+                    placeholderContent
+                        .frame(height: imageHeight)
+                }
+
+                titleContent
+            }
         }
         .frame(height: heroHeight)
         .frame(width: imageWidth)
@@ -43,21 +50,42 @@ struct ProductDetailHeroImage: View {
         return layout.height
     }
 
+    private var imageHeight: CGFloat {
+        max(heroHeight - titleHeight, 1)
+    }
+
+    private var titleHeight: CGFloat {
+        min(max(heroHeight * 0.28, 136), 188)
+    }
+
     private var imageWidth: CGFloat {
         max(containerSize.width, 1)
     }
 
+    private func heroBackdrop(_ image: UIImage) -> some View {
+        Image(uiImage: image)
+            .resizable()
+            .scaledToFill()
+            .frame(width: imageWidth, height: heroHeight)
+            .blur(radius: 34)
+            .saturation(1.12)
+            .overlay {
+                LinearGradient(
+                    colors: [
+                        .white.opacity(0.2),
+                        .black.opacity(0.1),
+                        .black.opacity(0.32),
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            }
+            .clipped()
+            .accessibilityHidden(true)
+    }
+
     private func loadedImageContent(_ image: UIImage) -> some View {
         ZStack(alignment: .top) {
-            if layout.mode == .fitOverBackdrop {
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .blur(radius: 40)
-                    .clipped()
-            }
-
             switch layout.mode {
             case .topAlignedFill:
                 topAlignedImage(image)
@@ -65,15 +93,17 @@ struct ProductDetailHeroImage: View {
                 fitImageOverBackdrop(image)
             }
         }
+        .frame(height: imageHeight)
+        .clipped()
         .accessibilityHidden(true)
     }
 
     private func topAlignedImage(_ image: UIImage) -> some View {
         Image(uiImage: image)
             .resizable()
-            .scaledToFit()
+            .scaledToFill()
             .frame(width: imageWidth)
-            .frame(height: heroHeight, alignment: .top)
+            .frame(height: imageHeight, alignment: .top)
             .clipped()
     }
 
@@ -81,11 +111,15 @@ struct ProductDetailHeroImage: View {
         Image(uiImage: image)
             .resizable()
             .scaledToFit()
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .frame(
+                maxWidth: .infinity,
+                maxHeight: .infinity,
+                alignment: .top
+            )
     }
 
     private var placeholderContent: some View {
-        Color.brandPurpleSurface
+        Color(uiColor: .systemGroupedBackground)
             .overlay {
                 if didFail {
                     Image(systemName: "bag")
@@ -97,32 +131,6 @@ struct ProductDetailHeroImage: View {
                 }
             }
             .accessibilityHidden(true)
-    }
-
-    private var progressiveBlur: some View {
-        VariableBlurView(
-            maxBlurRadius: 5,
-            direction: .blurredBottomClearTop,
-            startOffset: -0.1
-        )
-        .frame(height: heroHeight * 0.34)
-        .frame(maxHeight: .infinity, alignment: .bottom)
-        .accessibilityHidden(true)
-    }
-
-    private var scrim: some View {
-        LinearGradient(
-            colors: [
-                .clear,
-                .black.opacity(0.25),
-                .black.opacity(0.6),
-            ],
-            startPoint: .top,
-            endPoint: .bottom
-        )
-        .frame(height: heroHeight * 0.34)
-        .frame(maxHeight: .infinity, alignment: .bottom)
-        .accessibilityHidden(true)
     }
 
     private var titleContent: some View {
@@ -146,10 +154,21 @@ struct ProductDetailHeroImage: View {
                     .lineLimit(2)
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .frame(width: max(imageWidth - 48, 1), alignment: .leading)
         .padding(.horizontal, 24)
         .padding(.bottom, 28)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(height: titleHeight, alignment: .bottomLeading)
+        .frame(width: imageWidth, alignment: .leading)
+        .background {
+            LinearGradient(
+                colors: [
+                    .black.opacity(0.02),
+                    .black.opacity(0.34),
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        }
         .accessibilityElement(children: .combine)
     }
 
