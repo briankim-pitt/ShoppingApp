@@ -52,7 +52,10 @@ struct HomeView: View {
                         HomeAnimatedGradient()
                             .frame(height: 640)
                             .padding(.horizontal, -32)
-                            .offset(y: -34)
+                            // Frame is centered on the greeting; its own radial
+                            // fade dies out well within these bounds so the top
+                            // no longer clips.
+                            .offset(y: -213)
                             .allowsHitTesting(false)
                     }
                 }

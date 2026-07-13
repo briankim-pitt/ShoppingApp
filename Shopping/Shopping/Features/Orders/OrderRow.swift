@@ -45,13 +45,16 @@ struct OrderRow: View {
             }
         }
         .padding(14)
-        .background(
-            Color.brandPurpleSurface,
-            in: .rect(cornerRadius: 20)
-        )
+        // Cast the shadow from the background shape rather than the whole row
+        // so scrolling doesn't re-rasterize the thumbnail image each frame.
+        .background {
+            RoundedRectangle(cornerRadius: 18)
+                .fill(Color(uiColor: .systemBackground))
+                .shadow(color: .black.opacity(0.035), radius: 14, y: 8)
+        }
         .overlay {
-            RoundedRectangle(cornerRadius: 20)
-                .stroke(Color.brandPrimary.opacity(0.12))
+            RoundedRectangle(cornerRadius: 18)
+                .stroke(Color.brandPrimary.opacity(0.08))
         }
         .accessibilityElement(children: .combine)
     }

@@ -14,19 +14,33 @@ struct HomeAnimatedGradient: View {
         .blur(radius: 18)
         .saturation(1.12)
         .opacity(0.88)
-        .overlay {
+        // A radial mask centered on the greeting turns the mesh into a soft
+        // circular glow that blooms from behind the "Good ___" heading and
+        // fades outward in every direction. Fading on all sides also means
+        // no hard edge remains at the top when pulling to refresh, and the
+        // glow dies out well above the Recently Viewed row.
+        .mask {
             if fadeToWhite {
-                LinearGradient(
+                // Centered in the frame so the glow fades symmetrically on
+                // every side with margin to spare — no edge can slice through
+                // it. HomeView positions the frame so this center lands on the
+                // greeting.
+                RadialGradient(
                     stops: [
-                        .init(color: .white.opacity(0.0), location: 0.0),
-                        .init(color: .white.opacity(0.1), location: 0.28),
-                        .init(color: .white.opacity(0.66), location: 0.46),
-                        .init(color: Color.brandBackground.opacity(0.98), location: 0.62),
-                        .init(color: Color.brandBackground, location: 1.0),
+                        .init(color: .white, location: 0.0),
+                        .init(color: .white.opacity(0.82), location: 0.32),
+                        .init(color: .white.opacity(0.28), location: 0.62),
+                        .init(color: .clear, location: 0.96),
                     ],
-                    startPoint: .top,
-                    endPoint: .bottom
+                    center: .center,
+                    startRadius: 0,
+                    endRadius: 260
                 )
+                // Stretched into an ellipse so the glow reads wider than it
+                // is tall, rather than a perfect circle.
+                .scaleEffect(x: 1.6, y: 1.0)
+            } else {
+                Color.white
             }
         }
     }
