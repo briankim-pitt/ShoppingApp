@@ -2,26 +2,73 @@ import MapKit
 import SwiftUI
 
 struct OrdersMapView: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     private let shipments: [OrderShipment]
 
     init(orders: [VirtualOrder]) {
-        shipments = orders.compactMap(OrderShipment.init)
+        shipments = OrderShipment.mapShipments(from: orders)
     }
 
     var body: some View {
         if !shipments.isEmpty {
-            TimelineView(.periodic(from: .now, by: 1)) { context in
+            TimelineView(.periodic(from: .now, by: timelineInterval)) { context in
+                let dashPhase = animatedDashPhase(
+                    at: context.date,
+                    speed: 16,
+                    patternLength: 12
+                )
+
                 Map(initialPosition: initialPosition) {
                     ForEach(shipments) { shipment in
-                        MapPolyline(coordinates: shipment.path)
-                            .stroke(
-                                Color.brandPrimary.opacity(0.6),
-                                style: StrokeStyle(
-                                    lineWidth: 2,
-                                    lineCap: .round,
-                                    dash: [5, 5]
+                        let progress = shipment.order.shipmentProgress(
+                            at: context.date
+                        )
+                        let segments = shipment.routeSegments(at: context.date)
+
+                        if progress < 1 {
+                            MapPolyline(coordinates: segments.remaining)
+                                .stroke(
+                                    Color.brandPrimary.opacity(0.12),
+                                    style: StrokeStyle(
+                                        lineWidth: 3.5,
+                                        lineCap: .round
+                                    )
                                 )
-                            )
+
+                            MapPolyline(coordinates: segments.remaining)
+                                .stroke(
+                                    Color.brandPrimary.opacity(0.48),
+                                    style: StrokeStyle(
+                                        lineWidth: 2.25,
+                                        lineCap: .round,
+                                        dash: [4, 8],
+                                        dashPhase: dashPhase
+                                    )
+                                )
+                        }
+
+                        if progress > 0 {
+                            MapPolyline(coordinates: segments.traversed)
+                                .stroke(
+                                    Color.brandPrimary.opacity(0.14),
+                                    style: StrokeStyle(
+                                        lineWidth: 7,
+                                        lineCap: .round,
+                                        lineJoin: .round
+                                    )
+                                )
+
+                            MapPolyline(coordinates: segments.traversed)
+                                .stroke(
+                                    Color.brandPrimary.opacity(0.85),
+                                    style: StrokeStyle(
+                                        lineWidth: 3,
+                                        lineCap: .round,
+                                        lineJoin: .round
+                                    )
+                                )
+                        }
 
                         Annotation(
                             shipment.route.destinationName,
@@ -37,21 +84,23 @@ struct OrdersMapView: View {
 
                         Annotation(
                             shipment.order.primaryItemTitle,
-                            coordinate: shipment.packageCoordinate(at: context.date)
+                            coordinate: segments.current
                         ) {
-                            Image(systemName: "shippingbox.fill")
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(.white)
-                                .padding(7)
-                                .background(Color.brandPrimary, in: Circle())
-                                .shadow(
-                                    color: Color.brandPrimary.opacity(0.3),
-                                    radius: 6,
-                                    y: 2
-                                )
+                            ShipmentMapMarker(
+                                imageURL: shipment.order.items.first?.imageURL
+                            )
                         }
+                        .annotationTitles(.hidden)
                     }
                 }
+                .mapStyle(
+                    .standard(
+                        elevation: .flat,
+                        emphasis: .muted,
+                        pointsOfInterest: .excludingAll,
+                        showsTraffic: false
+                    )
+                )
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel(accessibilityLabel)
             }
@@ -65,6 +114,22 @@ struct OrdersMapView: View {
             MKMapRect(fitting: shipments.flatMap(\.path))
                 .padded(by: 0.2)
         )
+    }
+
+    private var timelineInterval: TimeInterval {
+        reduceMotion ? 1 : 1 / 15
+    }
+
+    private func animatedDashPhase(
+        at date: Date,
+        speed: Double,
+        patternLength: Double
+    ) -> CGFloat {
+        guard !reduceMotion else { return 0 }
+
+        let phase = (date.timeIntervalSinceReferenceDate * speed)
+            .truncatingRemainder(dividingBy: patternLength)
+        return -CGFloat(phase)
     }
 
     private var accessibilityLabel: String {

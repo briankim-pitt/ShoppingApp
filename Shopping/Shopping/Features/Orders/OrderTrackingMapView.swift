@@ -2,6 +2,8 @@ import MapKit
 import SwiftUI
 
 struct OrderTrackingMapView: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     let order: VirtualOrder
     let route: ShipmentRoute
 
@@ -17,24 +19,63 @@ struct OrderTrackingMapView: View {
     }
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 1)) { context in
+        TimelineView(.periodic(from: .now, by: timelineInterval)) { context in
             let progress = order.shipmentProgress(at: context.date)
-            let packageCoordinate = ShipmentGeometry.coordinate(
+            let segments = ShipmentGeometry.routeSegments(
                 from: route.origin,
                 to: route.destination,
                 fraction: progress
             )
+            let dashPhase = animatedDashPhase(
+                at: context.date,
+                speed: 18,
+                patternLength: 13
+            )
 
             Map(initialPosition: cameraPosition) {
-                MapPolyline(coordinates: routeCoordinates)
-                    .stroke(
-                        Color.brandPrimary,
-                        style: StrokeStyle(
-                            lineWidth: 3,
-                            lineCap: .round,
-                            dash: [6, 6]
+                if progress < 1 {
+                    MapPolyline(coordinates: segments.remaining)
+                        .stroke(
+                            Color.brandPrimary.opacity(0.14),
+                            style: StrokeStyle(
+                                lineWidth: 4,
+                                lineCap: .round
+                            )
                         )
-                    )
+
+                    MapPolyline(coordinates: segments.remaining)
+                        .stroke(
+                            Color.brandPrimary.opacity(0.52),
+                            style: StrokeStyle(
+                                lineWidth: 2.5,
+                                lineCap: .round,
+                                dash: [4, 9],
+                                dashPhase: dashPhase
+                            )
+                        )
+                }
+
+                if progress > 0 {
+                    MapPolyline(coordinates: segments.traversed)
+                        .stroke(
+                            Color.brandPrimary.opacity(0.16),
+                            style: StrokeStyle(
+                                lineWidth: 8,
+                                lineCap: .round,
+                                lineJoin: .round
+                            )
+                        )
+
+                    MapPolyline(coordinates: segments.traversed)
+                        .stroke(
+                            Color.brandPrimary,
+                            style: StrokeStyle(
+                                lineWidth: 4,
+                                lineCap: .round,
+                                lineJoin: .round
+                            )
+                        )
+                }
 
                 Annotation(route.originName, coordinate: route.origin) {
                     Image(systemName: "building.2.fill")
@@ -52,20 +93,22 @@ struct OrderTrackingMapView: View {
                         .background(.regularMaterial, in: Circle())
                 }
 
-                Annotation("Package", coordinate: packageCoordinate) {
-                    Image(systemName: "shippingbox.fill")
-                        .font(.headline.weight(.semibold))
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 8)
-                        .background(Color.brandPrimary, in: Capsule())
-                        .shadow(
-                            color: Color.brandPrimary.opacity(0.3),
-                            radius: 8,
-                            y: 3
-                        )
+                Annotation("Shipment", coordinate: segments.current) {
+                    ShipmentMapMarker(
+                        imageURL: order.items.first?.imageURL,
+                        imageSize: 42
+                    )
                 }
+                .annotationTitles(.hidden)
             }
+            .mapStyle(
+                .standard(
+                    elevation: .flat,
+                    emphasis: .muted,
+                    pointsOfInterest: .excludingAll,
+                    showsTraffic: false
+                )
+            )
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(accessibilityLabel(progress: progress))
         }
@@ -75,6 +118,22 @@ struct OrderTrackingMapView: View {
 
     private var cameraPosition: MapCameraPosition {
         .rect(MKMapRect(fitting: routeCoordinates).padded(by: 0.3))
+    }
+
+    private var timelineInterval: TimeInterval {
+        reduceMotion ? 1 : 1 / 15
+    }
+
+    private func animatedDashPhase(
+        at date: Date,
+        speed: Double,
+        patternLength: Double
+    ) -> CGFloat {
+        guard !reduceMotion else { return 0 }
+
+        let phase = (date.timeIntervalSinceReferenceDate * speed)
+            .truncatingRemainder(dividingBy: patternLength)
+        return -CGFloat(phase)
     }
 
     private func accessibilityLabel(progress: Double) -> String {

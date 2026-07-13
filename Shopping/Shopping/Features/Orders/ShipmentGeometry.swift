@@ -58,6 +58,45 @@ enum ShipmentGeometry {
             )
         }
     }
+
+    static func routeSegments(
+        from start: CLLocationCoordinate2D,
+        to end: CLLocationCoordinate2D,
+        fraction: Double,
+        sampleCount: Int = 64
+    ) -> ShipmentRouteSegments {
+        let progress = min(max(fraction, 0), 1)
+        let current = coordinate(from: start, to: end, fraction: progress)
+        let count = max(sampleCount, 2)
+        let traversedCount = max(
+            2,
+            Int((Double(count - 1) * progress).rounded(.up)) + 1
+        )
+        let remainingCount = max(
+            2,
+            Int((Double(count - 1) * (1 - progress)).rounded(.up)) + 1
+        )
+
+        return ShipmentRouteSegments(
+            traversed: routeCoordinates(
+                from: start,
+                to: current,
+                sampleCount: traversedCount
+            ),
+            remaining: routeCoordinates(
+                from: current,
+                to: end,
+                sampleCount: remainingCount
+            ),
+            current: current
+        )
+    }
+}
+
+struct ShipmentRouteSegments {
+    let traversed: [CLLocationCoordinate2D]
+    let remaining: [CLLocationCoordinate2D]
+    let current: CLLocationCoordinate2D
 }
 
 private extension Double {

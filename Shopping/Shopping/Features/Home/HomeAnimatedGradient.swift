@@ -12,8 +12,10 @@ struct HomeAnimatedGradient: View {
             background: Color.brandPurpleSurface
         )
         .blur(radius: 18)
-        .saturation(1.12)
-        .opacity(0.88)
+        .saturation(1.04)
+        .hueRotation(.degrees(8))
+        .brightness(0.09)
+        .opacity(0.3)
         // A radial mask centered on the greeting turns the mesh into a soft
         // circular glow that blooms from behind the "Good ___" heading and
         // fades outward in every direction. Fading on all sides also means

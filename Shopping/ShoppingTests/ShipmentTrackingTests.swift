@@ -66,6 +66,30 @@ struct ShipmentTrackingTests {
     }
 
     @Test
+    func routeSegmentsMeetAtCurrentShipmentCoordinate() {
+        let start = CLLocationCoordinate2D(latitude: 47.6062, longitude: -122.3321)
+        let end = CLLocationCoordinate2D(latitude: 35.6762, longitude: 139.6503)
+        let expectedCurrent = ShipmentGeometry.coordinate(
+            from: start,
+            to: end,
+            fraction: 0.4
+        )
+
+        let segments = ShipmentGeometry.routeSegments(
+            from: start,
+            to: end,
+            fraction: 0.4,
+            sampleCount: 10
+        )
+
+        #expect(segments.traversed.first?.isClose(to: start) == true)
+        #expect(segments.traversed.last?.isClose(to: expectedCurrent) == true)
+        #expect(segments.remaining.first?.isClose(to: expectedCurrent) == true)
+        #expect(segments.remaining.last?.isClose(to: end) == true)
+        #expect(segments.current.isClose(to: expectedCurrent))
+    }
+
+    @Test
     func shipmentProgressMatchesStatusAndDates() {
         let shippedAt = Date(timeIntervalSince1970: 1_000)
         let estimatedDeliveryAt = Date(timeIntervalSince1970: 1_200)
@@ -107,11 +131,36 @@ struct ShipmentTrackingTests {
         #expect(route?.destinationName == "Tokyo Fulfillment Center")
     }
 
+    @Test
+    func mapShipmentsIncludesActiveOrdersAndOnlyNewestDelivery() {
+        let olderDelivery = Date(timeIntervalSince1970: 1_200)
+        let newerDelivery = Date(timeIntervalSince1970: 1_400)
+        let orders = [
+            makeOrder(status: .ordered),
+            makeOrder(status: .processing),
+            makeOrder(status: .shipped),
+            makeOrder(status: .outForDelivery),
+            makeOrder(status: .delivered, deliveredAt: olderDelivery),
+            makeOrder(status: .delivered, deliveredAt: newerDelivery),
+            makeOrder(status: .cancelled),
+        ]
+
+        let shipments = OrderShipment.mapShipments(from: orders)
+
+        #expect(shipments.count == 4)
+        #expect(shipments.filter { $0.order.status == .delivered }.count == 1)
+        #expect(
+            shipments.first { $0.order.status == .delivered }?
+                .order.deliveredAt == newerDelivery
+        )
+    }
+
     private func makeOrder(
         status: VirtualOrderStatus = .shipped,
         shippedAt: Date? = Date(timeIntervalSince1970: 1_000),
         estimatedDeliveryAt: Date? = Date(timeIntervalSince1970: 1_200),
-        originLatitude: Double? = 47.6062
+        originLatitude: Double? = 47.6062,
+        deliveredAt: Date? = nil
     ) -> VirtualOrder {
         VirtualOrder(
             id: UUID(uuidString: "F1FE99E6-E99C-431A-ABA9-CCE5D2A9DE5B") ?? UUID(),
@@ -122,7 +171,9 @@ struct ShipmentTrackingTests {
             processingAt: Date(timeIntervalSince1970: 950),
             shippedAt: shippedAt,
             outForDeliveryAt: nil,
-            deliveredAt: status == .delivered ? Date(timeIntervalSince1970: 1_200) : nil,
+            deliveredAt: status == .delivered
+                ? deliveredAt ?? Date(timeIntervalSince1970: 1_200)
+                : nil,
             cancelledAt: status == .cancelled ? Date(timeIntervalSince1970: 1_000) : nil,
             estimatedDeliveryAt: estimatedDeliveryAt,
             nextStatusAt: nil,

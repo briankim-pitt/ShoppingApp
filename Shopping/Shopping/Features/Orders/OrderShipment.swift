@@ -23,8 +23,28 @@ struct OrderShipment: Identifiable {
         )
     }
 
-    func packageCoordinate(at date: Date) -> CLLocationCoordinate2D {
-        ShipmentGeometry.coordinate(
+    static func mapShipments(from orders: [VirtualOrder]) -> [OrderShipment] {
+        let activeOrders = orders.filter {
+            switch $0.status {
+            case .processing, .shipped, .outForDelivery:
+                true
+            case .ordered, .delivered, .cancelled:
+                false
+            }
+        }
+        let mostRecentDelivery = orders
+            .filter { $0.status == .delivered }
+            .max {
+                ($0.deliveredAt ?? $0.createdAt)
+                    < ($1.deliveredAt ?? $1.createdAt)
+            }
+
+        return (activeOrders + [mostRecentDelivery].compactMap { $0 })
+            .compactMap(Self.init)
+    }
+
+    func routeSegments(at date: Date) -> ShipmentRouteSegments {
+        ShipmentGeometry.routeSegments(
             from: route.origin,
             to: route.destination,
             fraction: order.shipmentProgress(at: date)
