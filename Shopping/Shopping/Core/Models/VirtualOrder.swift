@@ -48,7 +48,7 @@ struct VirtualOrder: Decodable, Equatable, Identifiable, Sendable {
     }
 
     var totalText: String {
-        totalAmount.wanderCoinText
+        totalAmount.wanderCoinNumber
     }
 
     var itemCount: Int {

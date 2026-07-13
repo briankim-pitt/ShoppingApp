@@ -23,6 +23,6 @@ struct VirtualOrderItem: Decodable, Equatable, Identifiable, Sendable {
 
     var totalPriceText: String {
         let total = unitPriceAmount * Decimal(quantity)
-        return total.wanderCoinText
+        return total.wanderCoinNumber
     }
 }

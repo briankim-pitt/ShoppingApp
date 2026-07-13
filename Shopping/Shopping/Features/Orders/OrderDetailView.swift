@@ -4,84 +4,43 @@ struct OrderDetailView: View {
     @Environment(AppModel.self) private var appModel
 
     let orderID: UUID
+    let heroItemID: UUID?
     @Bindable var viewModel: OrdersViewModel
+
+    init(
+        orderID: UUID,
+        heroItemID: UUID? = nil,
+        viewModel: OrdersViewModel
+    ) {
+        self.orderID = orderID
+        self.heroItemID = heroItemID
+        self.viewModel = viewModel
+    }
 
     var body: some View {
         Group {
             if let order = viewModel.orders.first(where: { $0.id == orderID }) {
-                List {
-                    Section {
-                        LabeledContent("Status") {
-                            Label(
-                                order.status.title,
-                                systemImage: order.status.systemImage
-                            )
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 28) {
+                        OrderDetailHeroView(
+                            order: order,
+                            selectedItemID: heroItemID
+                        )
+
+                        OrderDetailOverviewView(order: order)
+
+                        if let route = order.shipmentRoute {
+                            OrderDetailShipmentView(order: order, route: route)
                         }
 
-                        LabeledContent("Total", value: order.totalText)
+                        OrderDetailItemsView(order: order)
 
-                        LabeledContent("Ordered") {
-                            Text(
-                                order.orderedAt,
-                                format: .dateTime
-                                    .month(.abbreviated)
-                                    .day()
-                                    .year()
-                                    .hour()
-                                    .minute()
-                            )
-                        }
-
-                        if let estimatedDeliveryAt = order.estimatedDeliveryAt {
-                            LabeledContent("Estimated delivery") {
-                                Text(
-                                    estimatedDeliveryAt,
-                                    format: .dateTime
-                                        .month(.abbreviated)
-                                        .day()
-                                        .hour()
-                                        .minute()
-                                )
-                            }
-                        }
-
-                        if let nextStatusAt = order.nextStatusAt {
-                            LabeledContent("Next update") {
-                                Text(nextStatusAt, style: .relative)
-                            }
-                        }
+                        OrderDetailTrackingView(order: order)
                     }
-                    .brandListRow()
-
-                    if let route = order.shipmentRoute {
-                        Section("Shipment") {
-                            VStack(alignment: .leading, spacing: 8) {
-                                OrderTrackingMapView(order: order, route: route)
-
-                                Text(
-                                    "Simulated route from \(route.originName) to \(route.destinationName)"
-                                )
-                                .font(.footnote)
-                                .foregroundStyle(.secondary)
-                            }
-                            .padding(.vertical, 4)
-                        }
-                        .brandListRow()
-                    }
-
-                    Section("Items") {
-                        ForEach(order.items) { item in
-                            OrderItemRow(item: item)
-                        }
-                    }
-                    .brandListRow()
-
-                    Section("Tracking") {
-                        OrderTrackingTimeline(order: order)
-                            .padding(.vertical, 4)
-                    }
-                    .brandListRow()
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 32)
                 }
+                .scrollIndicators(.hidden)
                 .refreshable {
                     await viewModel.refresh(using: appModel)
                 }

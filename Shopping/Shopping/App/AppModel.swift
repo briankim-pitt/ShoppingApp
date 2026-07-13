@@ -167,8 +167,16 @@ final class AppModel {
         try await wishlistService.contains(productID: productID)
     }
 
+    func listWishlistProducts() async throws -> [Product] {
+        try await wishlistService.listProducts()
+    }
+
     func addToWishlist(productID: UUID) async throws {
         try await wishlistService.add(productID: productID)
+    }
+
+    func removeFromWishlist(productID: UUID) async throws {
+        try await wishlistService.remove(productID: productID)
     }
 
     func checkoutCart(idempotencyKey: UUID) async throws -> CartCheckoutResult {

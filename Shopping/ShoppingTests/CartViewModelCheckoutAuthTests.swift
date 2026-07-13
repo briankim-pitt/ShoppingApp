@@ -164,6 +164,8 @@ private struct StubOrdersService: OrdersServing {
 }
 
 private struct StubWishlistService: WishlistServing {
+    func listProducts() async throws -> [Product] { [] }
     func contains(productID: UUID) async throws -> Bool { false }
     func add(productID: UUID) async throws {}
+    func remove(productID: UUID) async throws {}
 }

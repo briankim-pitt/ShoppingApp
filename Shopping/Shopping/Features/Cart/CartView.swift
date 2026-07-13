@@ -7,7 +7,9 @@ struct CartView: View {
     var body: some View {
         NavigationStack {
             Group {
-                if appModel.cart.isEmpty {
+                if appModel.cart.isEmpty,
+                   viewModel.hasLoadedWishlist,
+                   viewModel.wishlistProducts.isEmpty {
                     ScrollView {
                         BrandedActionEmptyState(
                             imageName: "cart.symbols",
@@ -21,6 +23,9 @@ struct CartView: View {
                     }
                     .scrollBounceBehavior(.always)
                     .brandPageBackground()
+                    .refreshable {
+                        await viewModel.loadWishlist(using: appModel)
+                    }
                 } else {
                     cartContent
                 }
@@ -77,6 +82,10 @@ struct CartView: View {
                     nil
                 }
             }
+            .task(id: appModel.selectedTab) {
+                guard appModel.selectedTab == .cart else { return }
+                await viewModel.loadWishlist(using: appModel)
+            }
         }
     }
 
@@ -95,81 +104,150 @@ struct CartView: View {
 
     private var cartContent: some View {
         List {
-            Section {
-                ForEach(appModel.cart.items) { item in
-                    CartItemRow(
-                        item: item,
-                        setQuantity: {
-                            appModel.cart.setQuantity($0, for: item.id)
-                        },
-                        setManualCoinPrice: {
-                            appModel.cart.setManualCoinPrice($0, for: item.id)
-                        },
-                        remove: {
-                            appModel.cart.remove(productID: item.id)
+            if !appModel.cart.isEmpty {
+                Section {
+                    ForEach(appModel.cart.items) { item in
+                        CartItemRow(
+                            item: item,
+                            setQuantity: {
+                                appModel.cart.setQuantity($0, for: item.id)
+                            },
+                            setManualCoinPrice: {
+                                appModel.cart.setManualCoinPrice($0, for: item.id)
+                            },
+                            saveForLater: {
+                                Task {
+                                    await viewModel.saveForLater(
+                                        item,
+                                        using: appModel
+                                    )
+                                }
+                            },
+                            remove: {
+                                appModel.cart.remove(productID: item.id)
+                            }
+                        )
+                        .orderItemListRow()
+                    }
+                }
+
+                Section("Summary") {
+                    LabeledContent("Wallet") {
+                        Text(appModel.wallet?.balance.formatted ?? "Unavailable")
+                    }
+
+                    LabeledContent("Total") {
+                        Text(total?.wanderCoinText ?? "Complete coin prices")
+                    }
+
+                    if let total, let wallet = appModel.wallet {
+                        LabeledContent("After checkout") {
+                            Text(
+                                Money(
+                                    amount: wallet.balance.amount - total,
+                                    currencyCode: "WCN"
+                                ).formatted
+                            )
                         }
-                    )
-                }
-            }
-            .brandListRow()
-
-            Section("Summary") {
-                LabeledContent("Wallet") {
-                    Text(appModel.wallet?.balance.formatted ?? "Unavailable")
-                }
-
-                LabeledContent("Total") {
-                    Text(total?.wanderCoinText ?? "Complete coin prices")
-                }
-
-                if let total, let wallet = appModel.wallet {
-                    LabeledContent("After checkout") {
-                        Text(
-                            Money(
-                                amount: wallet.balance.amount - total,
-                                currencyCode: "WCN"
-                            ).formatted
+                        .foregroundStyle(
+                            total > wallet.balance.amount
+                                ? Color.brandAccentCoral
+                                : Color.primary
                         )
                     }
-                    .foregroundStyle(
-                        total > wallet.balance.amount
-                            ? Color.brandAccentCoral
-                            : Color.primary
-                    )
+                }
+                .brandListRow()
+
+                if let errorMessage = viewModel.errorMessage {
+                    Section {
+                        Label(errorMessage, systemImage: "exclamationmark.triangle")
+                            .foregroundStyle(Color.brandAccentCoral)
+                    }
+                    .brandListRow()
+                }
+
+                Section {
+                    Button(action: viewModel.requestCheckout) {
+                        HStack {
+                            Spacer()
+                            if viewModel.isCheckingOut {
+                                AppLoadingIndicator(
+                                    accessibilityLabel: "Placing order",
+                                    size: 22
+                                )
+                            } else {
+                                Label("Place Order", systemImage: "cart")
+                            }
+                            Spacer()
+                        }
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(Color.brandPrimary)
+                    .disabled(!canCheckout)
+                }
+                .listRowBackground(Color.clear)
+            }
+
+            if viewModel.isLoadingWishlist,
+               viewModel.wishlistProducts.isEmpty {
+                Section("Saved for Later") {
+                    HStack(spacing: 12) {
+                        AppLoadingIndicator(
+                            accessibilityLabel: "Loading saved products",
+                            size: 20
+                        )
+                        Text("Loading saved products")
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .brandListRow()
+            } else if !viewModel.wishlistProducts.isEmpty {
+                Section("Saved for Later") {
+                    ForEach(viewModel.wishlistProducts) { product in
+                        WishlistProductRow(
+                            product: product,
+                            isInCart: appModel.cart.contains(
+                                productID: product.id
+                            ),
+                            isWorking: viewModel.pendingWishlistProductIDs
+                                .contains(product.id),
+                            moveToCart: {
+                                Task {
+                                    await viewModel.moveToCart(
+                                        product,
+                                        using: appModel
+                                    )
+                                }
+                            },
+                            remove: {
+                                Task {
+                                    await viewModel.removeFromWishlist(
+                                        product,
+                                        using: appModel
+                                    )
+                                }
+                            }
+                        )
+                        .orderItemListRow()
+                    }
                 }
             }
-            .brandListRow()
 
-            if let errorMessage = viewModel.errorMessage {
+            if let wishlistErrorMessage = viewModel.wishlistErrorMessage {
                 Section {
-                    Label(errorMessage, systemImage: "exclamationmark.triangle")
-                        .foregroundStyle(Color.brandAccentCoral)
+                    Label(
+                        wishlistErrorMessage,
+                        systemImage: "exclamationmark.triangle"
+                    )
+                    .foregroundStyle(Color.brandAccentCoral)
                 }
                 .brandListRow()
             }
-
-            Section {
-                Button(action: viewModel.requestCheckout) {
-                    HStack {
-                        Spacer()
-                        if viewModel.isCheckingOut {
-                            AppLoadingIndicator(
-                                accessibilityLabel: "Placing order",
-                                size: 22
-                            )
-                        } else {
-                            Label("Place Order", systemImage: "cart")
-                        }
-                        Spacer()
-                    }
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(Color.brandPrimary)
-                .disabled(!canCheckout)
-            }
-            .listRowBackground(Color.clear)
         }
         .brandPageBackground()
+        .refreshable {
+            await viewModel.loadWishlist(using: appModel)
+        }
     }
 }
 

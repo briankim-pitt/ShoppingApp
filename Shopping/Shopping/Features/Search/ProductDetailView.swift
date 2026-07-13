@@ -121,7 +121,7 @@ struct ProductDetailView: View {
         }
 
         return (unitPrice.roundedUpToWholeCoin * Decimal(quantity))
-            .wanderCoinText
+            .wanderCoinNumber
     }
 
     private var wishlistToolbarButton: some View {

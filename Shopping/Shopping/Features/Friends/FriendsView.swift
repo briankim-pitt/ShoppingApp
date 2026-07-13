@@ -4,6 +4,8 @@ import SwiftUI
 struct FriendsView: View {
     @State private var searchText = ""
     @State private var isShowingAddFriends = false
+    @State private var scrollOffset: CGFloat = 0
+    @State private var isRefreshing = false
     @Namespace private var addFriendsTransition
 
     var body: some View {
@@ -26,13 +28,31 @@ struct FriendsView: View {
                             .containerRelativeFrame(.vertical)
                     }
                 }
+                .onScrollGeometryChange(for: CGFloat.self) { geometry in
+                    geometry.contentOffset.y + geometry.contentInsets.top
+                } action: { _, newValue in
+                    guard !isRefreshing else { return }
+                    scrollOffset = newValue < 0 ? -newValue : 0
+                }
                 .scrollBounceBehavior(.always)
                 .scrollDismissesKeyboard(.interactively)
+                .refreshable {
+                    withAnimation(.easeInOut(duration: 0.15)) {
+                        isRefreshing = true
+                    }
+                    await Task.yield()
+                    withAnimation(.easeInOut(duration: 0.15)) {
+                        isRefreshing = false
+                        scrollOffset = 0
+                    }
+                }
                 .brandPageBackground()
 
                 FriendsSearchBar(text: $searchText)
                     .padding(.horizontal)
                     .padding(.top, 8)
+                    .opacity(searchBarOpacity)
+                    .allowsHitTesting(searchBarOpacity > 0.05)
             }
             .appPageTitle("Friends")
             .toolbar {
@@ -64,6 +84,11 @@ struct FriendsView: View {
 
     private func showAddFriends() {
         isShowingAddFriends = true
+    }
+
+    private var searchBarOpacity: CGFloat {
+        guard !isRefreshing else { return 0 }
+        return max(1 - (scrollOffset / 56), 0)
     }
 }
 

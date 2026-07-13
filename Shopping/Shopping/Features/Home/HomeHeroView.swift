@@ -1,6 +1,9 @@
 import SwiftUI
 
 struct HomeHeroView: View {
+    @State private var ripples: [HomeDotMatrixRipple] = []
+    @State private var coinTapHapticTrigger = 0
+
     let greeting: String
     let displayName: String?
     let walletBalance: Decimal
@@ -12,6 +15,9 @@ struct HomeHeroView: View {
 
     var body: some View {
         ZStack {
+            HomeDotMatrix(ripples: ripples)
+                .allowsHitTesting(false)
+
             VStack(spacing: 18) {
                 VStack(spacing: 8) {
                     Text(heading)
@@ -21,7 +27,7 @@ struct HomeHeroView: View {
                         .minimumScaleFactor(0.78)
 
                     Label {
-                        Text(walletBalance.wanderCoinText)
+                        Text(walletBalance.wanderCoinNumber)
                             .fontWeight(.semibold)
                             .monospacedDigit()
                             .contentTransition(.numericText())
@@ -58,8 +64,10 @@ struct HomeHeroView: View {
         .containerRelativeFrame(.horizontal)
         .frame(height: 330)
         .contentShape(.rect)
-        .simultaneousGesture(
-            TapGesture().onEnded(addCoin)
+        .gesture(MultiTouchTapGesture(action: handleTap))
+        .sensoryFeedback(
+            .impact(flexibility: .soft, intensity: 0.55),
+            trigger: coinTapHapticTrigger
         )
         .accessibilityElement(children: .contain)
     }
@@ -93,5 +101,17 @@ struct HomeHeroView: View {
 
     private var parallaxOffset: CGFloat {
         -max(scrollOffset, 0) * 0.32
+    }
+
+    private func handleTap(at location: CGPoint) {
+        let ripple = HomeDotMatrixRipple(origin: location, startedAt: .now)
+        ripples.append(ripple)
+        coinTapHapticTrigger += 1
+        addCoin()
+
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(1.1))
+            ripples.removeAll { $0.id == ripple.id }
+        }
     }
 }

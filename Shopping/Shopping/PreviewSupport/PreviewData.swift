@@ -341,9 +341,14 @@ private struct PreviewCheckoutService: CheckoutServing {
 }
 
 private struct PreviewWishlistService: WishlistServing {
+    func listProducts() async throws -> [Product] {
+        Array(PreviewData.products.dropFirst().prefix(2))
+    }
+
     func contains(productID: UUID) async throws -> Bool {
         false
     }
 
     func add(productID: UUID) async throws {}
+    func remove(productID: UUID) async throws {}
 }

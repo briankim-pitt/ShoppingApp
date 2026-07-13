@@ -8,6 +8,11 @@ final class CartViewModel {
     var errorMessage: String?
     var isShowingCheckoutConfirmation = false
     var isShowingClearConfirmation = false
+    var wishlistProducts: [Product] = []
+    var isLoadingWishlist = false
+    var hasLoadedWishlist = false
+    var wishlistErrorMessage: String?
+    private(set) var pendingWishlistProductIDs: Set<UUID> = []
 
     /// Signals a Face ID outcome for the view to play haptic feedback. Each
     /// value carries a fresh id so repeated same-type outcomes retrigger.
@@ -32,6 +37,65 @@ final class CartViewModel {
     func requestCheckout() {
         errorMessage = nil
         isShowingCheckoutConfirmation = true
+    }
+
+    func loadWishlist(using appModel: AppModel) async {
+        guard !isLoadingWishlist else { return }
+        isLoadingWishlist = true
+        wishlistErrorMessage = nil
+        defer {
+            isLoadingWishlist = false
+            hasLoadedWishlist = true
+        }
+
+        do {
+            wishlistProducts = try await appModel.listWishlistProducts()
+        } catch {
+            wishlistErrorMessage = error.localizedDescription
+        }
+    }
+
+    func saveForLater(_ item: CartItem, using appModel: AppModel) async {
+        guard pendingWishlistProductIDs.insert(item.id).inserted else { return }
+        wishlistErrorMessage = nil
+        defer { pendingWishlistProductIDs.remove(item.id) }
+
+        do {
+            try await appModel.addToWishlist(productID: item.id)
+            appModel.cart.remove(productID: item.id)
+            if !wishlistProducts.contains(where: { $0.id == item.id }) {
+                wishlistProducts.insert(item.product, at: 0)
+            }
+        } catch {
+            wishlistErrorMessage = error.localizedDescription
+        }
+    }
+
+    func moveToCart(_ product: Product, using appModel: AppModel) async {
+        guard pendingWishlistProductIDs.insert(product.id).inserted else { return }
+        wishlistErrorMessage = nil
+        defer { pendingWishlistProductIDs.remove(product.id) }
+
+        do {
+            try await appModel.removeFromWishlist(productID: product.id)
+            wishlistProducts.removeAll { $0.id == product.id }
+            appModel.cart.add(product)
+        } catch {
+            wishlistErrorMessage = error.localizedDescription
+        }
+    }
+
+    func removeFromWishlist(_ product: Product, using appModel: AppModel) async {
+        guard pendingWishlistProductIDs.insert(product.id).inserted else { return }
+        wishlistErrorMessage = nil
+        defer { pendingWishlistProductIDs.remove(product.id) }
+
+        do {
+            try await appModel.removeFromWishlist(productID: product.id)
+            wishlistProducts.removeAll { $0.id == product.id }
+        } catch {
+            wishlistErrorMessage = error.localizedDescription
+        }
     }
 
     func checkout(using appModel: AppModel) async {

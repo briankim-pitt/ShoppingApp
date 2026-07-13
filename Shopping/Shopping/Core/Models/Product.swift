@@ -42,6 +42,6 @@ struct Product: Codable, Equatable, Hashable, Identifiable, Sendable {
     var wanderCoinPriceText: String {
         wanderCoinPriceAmount?
             .roundedUpToWholeCoin
-            .wanderCoinText ?? "Set coin price in cart"
+            .wanderCoinNumber ?? "Set coin price in cart"
     }
 }

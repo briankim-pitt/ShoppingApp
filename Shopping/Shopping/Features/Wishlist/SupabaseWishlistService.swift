@@ -22,6 +22,10 @@ struct SupabaseWishlistService: WishlistServing {
         let id: UUID
     }
 
+    private struct WishlistProductRecord: Decodable {
+        let product: Product
+    }
+
     private struct NewWishlistItem: Encodable {
         let wishlistID: UUID
         let productID: UUID
@@ -33,6 +37,38 @@ struct SupabaseWishlistService: WishlistServing {
     }
 
     let client: SupabaseClient
+
+    func listProducts() async throws -> [Product] {
+        guard let wishlistID = try await existingWishlistID() else {
+            return []
+        }
+
+        let productColumns = """
+            id,
+            canonical_url,
+            source_domain,
+            title,
+            description,
+            brand,
+            image_url,
+            currency_code,
+            price_amount,
+            wandercoin_price_amount,
+            created_at,
+            updated_at,
+            last_imported_at
+            """
+        let records: [WishlistProductRecord] = try await client
+            .from("wishlist_items")
+            .select(
+                "product:products!wishlist_items_product_id_fkey(\(productColumns))"
+            )
+            .eq("wishlist_id", value: wishlistID)
+            .order("created_at", ascending: false)
+            .execute()
+            .value
+        return records.map(\.product)
+    }
 
     func contains(productID: UUID) async throws -> Bool {
         guard let wishlistID = try await existingWishlistID() else {
@@ -63,6 +99,17 @@ struct SupabaseWishlistService: WishlistServing {
                     productID: productID
                 )
             )
+            .execute()
+    }
+
+    func remove(productID: UUID) async throws {
+        guard let wishlistID = try await existingWishlistID() else { return }
+
+        try await client
+            .from("wishlist_items")
+            .delete()
+            .eq("wishlist_id", value: wishlistID)
+            .eq("product_id", value: productID)
             .execute()
     }
 

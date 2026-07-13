@@ -3,6 +3,8 @@ import SwiftUI
 struct SearchView: View {
     @Environment(AppModel.self) private var appModel
     @State private var viewModel = SearchViewModel()
+    @State private var scrollOffset: CGFloat = 0
+    @State private var isRefreshing = false
     @Namespace private var productTransition
 
     var body: some View {
@@ -32,10 +34,23 @@ struct SearchView: View {
                     .padding(.top, 72)
                     .padding(.bottom, 32)
                 }
+                .onScrollGeometryChange(for: CGFloat.self) { geometry in
+                    geometry.contentOffset.y + geometry.contentInsets.top
+                } action: { _, newValue in
+                    guard !isRefreshing else { return }
+                    scrollOffset = newValue < 0 ? -newValue : 0
+                }
                 .scrollBounceBehavior(.always)
                 .scrollDismissesKeyboard(.interactively)
                 .refreshable {
+                    withAnimation(.easeInOut(duration: 0.15)) {
+                        isRefreshing = true
+                    }
                     await viewModel.resetToCatalog(using: appModel)
+                    withAnimation(.easeInOut(duration: 0.15)) {
+                        isRefreshing = false
+                        scrollOffset = 0
+                    }
                 }
                 .brandPageBackground()
 
@@ -46,6 +61,8 @@ struct SearchView: View {
                 )
                 .padding(.horizontal)
                 .padding(.top, 8)
+                .opacity(searchBarOpacity)
+                .allowsHitTesting(searchBarOpacity > 0.05)
             }
             .appPageTitle("Discover")
             .navigationDestination(for: ProductBrand.self) { brand in
@@ -100,6 +117,11 @@ struct SearchView: View {
         Task {
             await viewModel.searchProducts(using: appModel)
         }
+    }
+
+    private var searchBarOpacity: CGFloat {
+        guard !isRefreshing else { return 0 }
+        return max(1 - (scrollOffset / 56), 0)
     }
 }
 
