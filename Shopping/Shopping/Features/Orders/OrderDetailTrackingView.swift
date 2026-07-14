@@ -6,11 +6,10 @@ struct OrderDetailTrackingView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Tracking")
-                .font(.title2.bold())
+                .font(.headline)
 
             OrderTrackingTimeline(order: order)
-                .padding(16)
-                .background(Color.brandPurpleSurface, in: .rect(cornerRadius: 16))
+                .orderItemCardStyle()
         }
     }
 }

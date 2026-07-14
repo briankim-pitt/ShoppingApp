@@ -81,9 +81,7 @@ enum PreviewData {
         defaults.removePersistentDomain(forName: suiteName)
 
         let store = RecentlyViewedStore(defaults: defaults)
-        for product in products.reversed() {
-            store.record(product)
-        }
+        store.record(product)
         return store
     }
 
@@ -272,7 +270,7 @@ private struct PreviewProductImportService: ProductImportServing {
 
 private struct PreviewCatalogService: CatalogServing {
     func browseProducts() async throws -> [Product] {
-        [PreviewData.product]
+        PreviewData.products
     }
 
     func searchProducts(query: String) async throws -> [Product] {

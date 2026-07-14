@@ -20,31 +20,37 @@ struct OrderDetailView: View {
     var body: some View {
         Group {
             if let order = viewModel.orders.first(where: { $0.id == orderID }) {
-                ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 28) {
-                        OrderDetailHeroView(
-                            order: order,
-                            selectedItemID: heroItemID
-                        )
+                ZStack {
+                    Color.brandBackground
+                        .ignoresSafeArea()
 
-                        OrderDetailOverviewView(order: order)
+                    ScrollView {
+                        LazyVStack(alignment: .leading, spacing: 24) {
+                            OrderDetailHeroView(
+                                order: order,
+                                selectedItemID: heroItemID
+                            )
 
-                        if let route = order.shipmentRoute {
-                            OrderDetailShipmentView(order: order, route: route)
+                            OrderDetailOverviewView(order: order)
+
+                            if let route = order.shipmentRoute {
+                                OrderDetailShipmentView(order: order, route: route)
+                            }
+
+                            OrderDetailItemsView(order: order)
+
+                            OrderDetailTrackingView(order: order)
                         }
-
-                        OrderDetailItemsView(order: order)
-
-                        OrderDetailTrackingView(order: order)
+                        .padding(.horizontal, 20)
+                        .padding(.top, 12)
+                        .padding(.bottom, 32)
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 32)
+                    .scrollContentBackground(.hidden)
+                    .scrollIndicators(.hidden)
+                    .refreshable {
+                        await viewModel.refresh(using: appModel)
+                    }
                 }
-                .scrollIndicators(.hidden)
-                .refreshable {
-                    await viewModel.refresh(using: appModel)
-                }
-                .brandPageBackground()
             } else {
                 ContentUnavailableView {
                     BrandEmptyStateLabel(
@@ -56,6 +62,8 @@ struct OrderDetailView: View {
                 }
             }
         }
-        .appPageTitle("Order Details")
+        .navigationTitle("Order Details")
+        .toolbarTitleDisplayMode(.inline)
+        .toolbarBackground(.hidden, for: .navigationBar)
     }
 }

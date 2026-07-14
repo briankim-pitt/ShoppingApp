@@ -5,39 +5,23 @@ struct OrderDetailHeroView: View {
     let selectedItemID: UUID?
 
     var body: some View {
-        ZStack(alignment: .bottomLeading) {
-            AsyncImage(url: heroItem?.imageURL) { image in
-                image
-                    .resizable()
-                    .scaledToFill()
-            } placeholder: {
-                Image(systemName: "shippingbox")
-                    .font(.largeTitle)
-                    .foregroundStyle(Color.brandPrimary)
-            }
-            .frame(maxWidth: .infinity)
-            .aspectRatio(1, contentMode: .fit)
-            .background(Color.white.opacity(0.95))
-            .clipShape(.rect(cornerRadius: 28))
+        VStack(alignment: .leading, spacing: 14) {
+            ProductHeroImage(url: heroItem?.imageURL)
+                .overlay {
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(Color.brandPrimary.opacity(0.08))
+                }
+                .shadow(color: .black.opacity(0.035), radius: 14, y: 8)
 
-            LinearGradient(
-                colors: [.clear, .black.opacity(0.58)],
-                startPoint: .center,
-                endPoint: .bottom
-            )
-            .clipShape(.rect(cornerRadius: 28))
-
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 10) {
                 Label(order.status.title, systemImage: order.status.systemImage)
                     .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.white.opacity(0.9))
+                    .foregroundStyle(Color.brandPrimary)
 
                 Text(heroItem?.title ?? "Virtual Order")
-                    .font(.title.bold())
-                    .foregroundStyle(.white)
+                    .font(.system(size: 30, weight: .bold, design: .rounded))
                     .lineLimit(3)
             }
-            .padding(20)
         }
         .accessibilityElement(children: .combine)
     }

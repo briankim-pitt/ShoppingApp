@@ -3,6 +3,8 @@ import SwiftUI
 struct HomeView: View {
     @Environment(AppModel.self) private var appModel
     @State private var orders: [VirtualOrder] = []
+    @State private var catalogProducts: [Product] = []
+    @State private var recommendedProducts: [Product] = []
     @State private var isClaimingDailyBonus = false
     @State private var isShowingCheckInError = false
     @State private var checkInErrorMessage = ""
@@ -36,6 +38,10 @@ struct HomeView: View {
                         .padding(.top, -12)
 
                         statsSection
+
+                        if !recommendedProducts.isEmpty {
+                            forYouSection
+                        }
 
                         if !appModel.recentlyViewed.products.isEmpty {
                             recentlyViewedSection
@@ -90,11 +96,14 @@ struct HomeView: View {
             }
             .task {
                 await appModel.loadUserEmail()
-                await loadOrders()
+                await loadHomeContent()
             }
             .refreshable {
                 await appModel.refreshWallet()
-                await loadOrders()
+                await loadHomeContent()
+            }
+            .onChange(of: appModel.recentlyViewed.products.map(\.id)) {
+                updateRecommendations()
             }
             .alert(
                 "Check-in Unavailable",
@@ -187,6 +196,30 @@ struct HomeView: View {
         }
     }
 
+    private var forYouSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("For You")
+                .font(.headline)
+
+            ScrollView(.horizontal) {
+                LazyHStack(spacing: 14) {
+                    ForEach(recommendedProducts) { product in
+                        NavigationLink(value: product) {
+                            RecentlyViewedProductCard(
+                                product: product,
+                                transitionNamespace: productTransition
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .scrollTargetLayout()
+            }
+            .scrollClipDisabled()
+            .scrollIndicators(.hidden)
+        }
+    }
+
     private var recentOrdersSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
@@ -255,10 +288,26 @@ struct HomeView: View {
         }
     }
 
-    private func loadOrders() async {
-        if let orders = try? await appModel.listOrders() {
+    private func loadHomeContent() async {
+        async let loadedOrders = try? appModel.listOrders()
+        async let loadedCatalog = try? appModel.browseProducts()
+
+        let (orders, catalog) = await (loadedOrders, loadedCatalog)
+        if let orders {
             self.orders = orders
         }
+        if let catalog {
+            catalogProducts = catalog
+        }
+        updateRecommendations()
+    }
+
+    private func updateRecommendations() {
+        recommendedProducts = ProductRecommendationEngine.recommendations(
+            from: catalogProducts,
+            recentlyViewed: appModel.recentlyViewed.products,
+            orders: orders
+        )
     }
 
     private func claimDailyBonus() {

@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct OrdersBoardView: View {
+    private let bottomBuffer: CGFloat = 180
+
     let items: [OrderBoardItem]
     @Binding var positions: [UUID: OrderBoardPosition]
     let isArranging: Bool
@@ -12,6 +14,11 @@ struct OrdersBoardView: View {
 
     var body: some View {
         GeometryReader { geometry in
+            let itemBoardSize = CGSize(
+                width: geometry.size.width,
+                height: max(geometry.size.height - bottomBuffer, 1)
+            )
+
             ZStack {
                 OrderBoardDotMatrix()
 
@@ -20,7 +27,7 @@ struct OrdersBoardView: View {
                         OrderBoardEditorTile(
                             boardItem: item,
                             position: positionBinding(for: item.id, index: index),
-                            boardSize: geometry.size,
+                            boardSize: itemBoardSize,
                             savePositionAction: savePositions
                         )
                     } else {
@@ -36,7 +43,7 @@ struct OrdersBoardView: View {
                             displayPosition(
                                 for: item,
                                 at: index,
-                                in: geometry.size
+                                in: itemBoardSize
                             )
                         )
                     }
@@ -53,7 +60,7 @@ struct OrdersBoardView: View {
 
     private var boardHeight: CGFloat {
         let rows = ceil(Double(items.count) / 3)
-        return max(CGFloat(rows) * 148, 540)
+        return max(CGFloat(rows) * 148, 540) + bottomBuffer
     }
 
     private func positionBinding(
@@ -109,5 +116,4 @@ struct OrdersBoardView: View {
             y: item.boardTileSize / 2 + position.y * verticalTravel
         )
     }
-
 }

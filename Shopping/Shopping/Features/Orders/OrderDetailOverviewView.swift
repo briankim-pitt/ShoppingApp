@@ -6,13 +6,13 @@ struct OrderDetailOverviewView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Order overview")
-                .font(.title2.bold())
+                .font(.headline)
 
             HStack(spacing: 12) {
                 OrderDetailMetricView(
                     title: "Total",
                     value: order.totalText,
-                    systemImage: "w.circle.fill"
+                    showsCoin: true
                 )
 
                 OrderDetailMetricView(
@@ -22,21 +22,27 @@ struct OrderDetailOverviewView: View {
                 )
             }
 
-            LabeledContent("Ordered") {
-                Text(
-                    order.orderedAt,
-                    format: .dateTime.month(.abbreviated).day().year()
-                )
-            }
-
-            if let estimatedDeliveryAt = order.estimatedDeliveryAt {
-                LabeledContent("Estimated delivery") {
+            VStack(spacing: 12) {
+                LabeledContent("Ordered") {
                     Text(
-                        estimatedDeliveryAt,
-                        format: .dateTime.month(.abbreviated).day()
+                        order.orderedAt,
+                        format: .dateTime.month(.abbreviated).day().year()
                     )
                 }
+
+                if let estimatedDeliveryAt = order.estimatedDeliveryAt {
+                    Divider()
+
+                    LabeledContent("Estimated delivery") {
+                        Text(
+                            estimatedDeliveryAt,
+                            format: .dateTime.month(.abbreviated).day()
+                        )
+                    }
+                }
             }
+            .font(.subheadline)
+            .orderItemCardStyle()
         }
     }
 }

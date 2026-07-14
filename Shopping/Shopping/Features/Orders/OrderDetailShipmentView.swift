@@ -7,13 +7,15 @@ struct OrderDetailShipmentView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Shipment")
-                .font(.title2.bold())
+                .font(.headline)
 
             OrderTrackingMapView(order: order, route: route)
+                .orderItemCardStyle()
 
             Text("\(route.originName) to \(route.destinationName)")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
+                .padding(.horizontal, 2)
         }
     }
 }

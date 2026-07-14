@@ -6,12 +6,11 @@ struct OrderDetailItemsView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Items")
-                .font(.title2.bold())
+                .font(.headline)
 
             ForEach(order.items) { item in
                 OrderItemRow(item: item)
-                    .padding(12)
-                    .background(Color.brandPurpleSurface, in: .rect(cornerRadius: 16))
+                    .orderItemCardStyle()
             }
         }
     }
