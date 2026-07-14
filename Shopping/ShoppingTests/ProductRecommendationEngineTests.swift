@@ -104,6 +104,72 @@ struct ProductRecommendationEngineTests {
         #expect(result.map(\.id) == [candidate.id])
     }
 
+    @Test
+    func alternatesProductsFromDifferentInterestSignals() {
+        let viewedSweatshirt = product(
+            id: "00000000-0000-0000-0000-000000000021",
+            title: "Cotton Sweatshirt",
+            brand: "Layer",
+            description: "Soft fleece pullover sweatshirt",
+            price: 45
+        )
+        let viewedKeyboard = product(
+            id: "00000000-0000-0000-0000-000000000022",
+            title: "Mechanical Keyboard",
+            brand: "Keys",
+            description: "Compact gaming keyboard",
+            price: 180
+        )
+        let sweatshirtOne = product(
+            id: "00000000-0000-0000-0000-000000000023",
+            title: "Fleece Sweatshirt One",
+            brand: "Layer",
+            description: "Soft cotton pullover",
+            price: 50
+        )
+        let sweatshirtTwo = product(
+            id: "00000000-0000-0000-0000-000000000024",
+            title: "Fleece Sweatshirt Two",
+            brand: "Layer",
+            description: "Relaxed cotton pullover",
+            price: 55
+        )
+        let keyboardOne = product(
+            id: "00000000-0000-0000-0000-000000000025",
+            title: "Mechanical Keyboard One",
+            brand: "Keys",
+            description: "Compact gaming switches",
+            price: 170
+        )
+        let keyboardTwo = product(
+            id: "00000000-0000-0000-0000-000000000026",
+            title: "Mechanical Keyboard Two",
+            brand: "Keys",
+            description: "Compact gaming switches",
+            price: 190
+        )
+
+        let result = ProductRecommendationEngine.recommendations(
+            from: [
+                sweatshirtOne,
+                sweatshirtTwo,
+                keyboardOne,
+                keyboardTwo,
+            ],
+            recentlyViewed: [viewedSweatshirt, viewedKeyboard],
+            orders: [],
+            limit: 4
+        )
+        let categories = result.map {
+            $0.title.contains("Sweatshirt") ? "sweatshirt" : "keyboard"
+        }
+
+        #expect(categories.count == 4)
+        #expect(categories[0] != categories[1])
+        #expect(categories[1] != categories[2])
+        #expect(categories[2] != categories[3])
+    }
+
     private func product(
         id: String,
         title: String,

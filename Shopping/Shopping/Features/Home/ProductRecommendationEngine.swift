@@ -16,10 +16,10 @@ enum ProductRecommendationEngine {
             eligibleOrders.flatMap(\.items).compactMap(\.productID)
         )
 
-        return catalog
+        let rankedProducts = catalog
             .filter { !excludedIDs.contains($0.id) }
             .map { product in
-                (product: product, score: score(product, against: signals))
+                rankedProduct(product, against: signals)
             }
             .filter { $0.score > 0 }
             .sorted { left, right in
@@ -29,13 +29,14 @@ enum ProductRecommendationEngine {
                 }
                 return left.score > right.score
             }
-            .prefix(max(limit, 0))
-            .map(\.product)
+
+        return diversified(rankedProducts, limit: max(limit, 0))
     }
 
     private static func viewSignals(from products: [Product]) -> [Signal] {
         products.enumerated().map { index, product in
             Signal(
+                key: "view:\(product.id)",
                 brand: normalized(product.brand),
                 sourceDomain: normalized(product.sourceDomain),
                 tokens: tokens(for: product),
@@ -52,6 +53,7 @@ enum ProductRecommendationEngine {
             .flatMap { orderIndex, order in
                 order.items.map { item in
                     Signal(
+                        key: "order:\(item.productID?.uuidString ?? item.title)",
                         brand: nil,
                         sourceDomain: nil,
                         tokens: tokens(in: item.title),
@@ -63,15 +65,18 @@ enum ProductRecommendationEngine {
             }
     }
 
-    private static func score(
+    private static func rankedProduct(
         _ product: Product,
         against signals: [Signal]
-    ) -> Double {
+    ) -> RankedProduct {
         let productTokens = tokens(for: product)
         let productBrand = normalized(product.brand)
         let productDomain = normalized(product.sourceDomain)
+        var totalScore = 0.0
+        var strongestSignalKey = signals[0].key
+        var strongestSignalScore = -Double.infinity
 
-        return signals.reduce(0) { total, signal in
+        for signal in signals {
             var match = Double(productTokens.intersection(signal.tokens).count)
 
             if let productBrand, productBrand == signal.brand {
@@ -90,8 +95,62 @@ enum ProductRecommendationEngine {
                 signal.price
             )
 
-            return total + match * signal.weight
+            let signalScore = match * signal.weight
+            totalScore += signalScore
+
+            if signalScore > strongestSignalScore {
+                strongestSignalScore = signalScore
+                strongestSignalKey = signal.key
+            }
         }
+
+        return RankedProduct(
+            product: product,
+            score: totalScore + stableJitter(for: product.id),
+            diversityKey: strongestSignalKey
+        )
+    }
+
+    private static func diversified(
+        _ rankedProducts: [RankedProduct],
+        limit: Int
+    ) -> [Product] {
+        guard limit > 0 else { return [] }
+
+        var buckets = Dictionary(grouping: rankedProducts, by: \.diversityKey)
+        let orderedKeys = buckets.keys.sorted { left, right in
+            let leftScore = buckets[left]?.first?.score ?? 0
+            let rightScore = buckets[right]?.first?.score ?? 0
+            return leftScore > rightScore
+        }
+        var result: [Product] = []
+
+        while result.count < limit {
+            var addedProduct = false
+
+            for key in orderedKeys where result.count < limit {
+                guard var bucket = buckets[key], !bucket.isEmpty else {
+                    continue
+                }
+
+                result.append(bucket.removeFirst().product)
+                buckets[key] = bucket
+                addedProduct = true
+            }
+
+            if !addedProduct {
+                break
+            }
+        }
+
+        return result
+    }
+
+    private static func stableJitter(for id: UUID) -> Double {
+        let hash = id.uuidString.utf8.reduce(UInt64(2_166_136_261)) {
+            ($0 &* 16_777_619) ^ UInt64($1)
+        }
+        return Double(hash % 1_000) / 1_250
     }
 
     private static func priceSimilarity(
@@ -141,10 +200,17 @@ enum ProductRecommendationEngine {
     ]
 
     private struct Signal {
+        let key: String
         let brand: String?
         let sourceDomain: String?
         let tokens: Set<String>
         let price: Decimal?
         let weight: Double
+    }
+
+    private struct RankedProduct {
+        let product: Product
+        let score: Double
+        let diversityKey: String
     }
 }
