@@ -89,7 +89,7 @@ struct ProductPurchaseGlassBar: View {
         .buttonStyle(.glassProminent)
         .buttonBorderShape(.capsule)
         .controlSize(.large)
-        .tint(Color.brandPrimary)
+        .tint(Color.brandAction)
         .disabled(isInCart)
         .overlay(alignment: .trailing) {
             if isInCart {

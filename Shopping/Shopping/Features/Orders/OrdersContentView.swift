@@ -33,7 +33,7 @@ struct OrdersContentView: View {
                         action: retryAction
                     )
                     .buttonStyle(.glassProminent)
-                    .tint(Color.brandPrimary)
+                    .tint(Color.brandAction)
                 }
                 .containerRelativeFrame(.vertical)
             } else if viewModel.orders.isEmpty {

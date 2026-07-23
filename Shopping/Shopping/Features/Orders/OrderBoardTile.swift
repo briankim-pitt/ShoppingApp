@@ -3,6 +3,7 @@ import SwiftUI
 struct OrderBoardTile: View {
     let boardItem: OrderBoardItem
     let transitionNamespace: Namespace.ID
+    let interactionAction: () -> Void
     let selectionAction: (UUID) -> Void
     let moveAction: () -> Void
     let hideAction: (OrderBoardItem) -> Void
@@ -22,14 +23,17 @@ struct OrderBoardTile: View {
         .matchedTransitionSource(id: boardItem.id, in: transitionNamespace)
         .contextMenu {
             Button("Move", systemImage: "arrow.up.and.down.and.arrow.left.and.right") {
+                interactionAction()
                 moveAction()
             }
 
             Button("Hide", systemImage: "eye.slash") {
+                interactionAction()
                 hideAction(boardItem)
             }
 
             Button("Delete", systemImage: "trash", role: .destructive) {
+                interactionAction()
                 deleteAction(boardItem)
             }
         }
@@ -38,6 +42,7 @@ struct OrderBoardTile: View {
     }
 
     private func selectItem() {
+        interactionAction()
         selectionAction(boardItem.id)
     }
 }

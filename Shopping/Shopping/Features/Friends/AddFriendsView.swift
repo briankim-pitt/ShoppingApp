@@ -1,4 +1,3 @@
-import Foundation
 import SwiftUI
 
 struct AddFriendsView: View {
@@ -8,28 +7,16 @@ struct AddFriendsView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                if searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    ContentUnavailableView {
-                        BrandEmptyStateLabel(
-                            title: "Find Friends",
-                            systemImage: "person.badge.plus"
-                        )
-                    } description: {
-                        Text("Search for someone by username.")
-                    }
-                    .containerRelativeFrame(.vertical)
-                } else {
-                    ContentUnavailableView.search
-                        .containerRelativeFrame(.vertical)
-                }
+                FriendsInvitationContent(
+                    searchText: $searchText,
+                    showsFindFriendsSection: true
+                )
+                .padding(.horizontal, 20)
+                .padding(.vertical, 24)
             }
             .scrollBounceBehavior(.always)
+            .scrollDismissesKeyboard(.interactively)
             .brandPageBackground()
-            .searchable(
-                text: $searchText,
-                placement: .navigationBarDrawer(displayMode: .always),
-                prompt: "Search by username"
-            )
             .navigationTitle("Add Friends")
             .toolbarTitleDisplayMode(.inline)
             .toolbar {

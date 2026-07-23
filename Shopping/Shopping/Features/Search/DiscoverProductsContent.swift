@@ -50,7 +50,7 @@ struct DiscoverProductsContent: View {
                     action: showURLImport
                 )
                 .buttonStyle(.glassProminent)
-                .tint(Color.brandPrimary)
+                .tint(Color.brandAction)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 32)

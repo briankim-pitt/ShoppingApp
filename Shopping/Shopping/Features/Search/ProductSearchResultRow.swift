@@ -36,7 +36,7 @@ struct ProductSearchResultRow: View {
                 action: addToCart
             )
             .labelStyle(.iconOnly)
-            .tint(Color.brandPrimary)
+            .tint(Color.brandAction)
             .disabled(isInCart)
         }
         .padding(.vertical, 4)

@@ -182,7 +182,7 @@ struct CartView: View {
                         }
                     }
                     .buttonStyle(.borderedProminent)
-                    .tint(Color.brandPrimary)
+                    .tint(Color.brandAction)
                     .disabled(!canCheckout)
                 }
                 .listRowBackground(Color.clear)

@@ -26,7 +26,7 @@ struct RootView: View {
             }
         }
         .fontDesign(.rounded)
-        .tint(Color.brandPrimary)
+        .tint(Color.brandAction)
         .animation(.default, value: appModel.phase)
     }
 }

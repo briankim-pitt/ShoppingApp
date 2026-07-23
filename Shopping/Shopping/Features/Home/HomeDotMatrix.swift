@@ -19,6 +19,7 @@ struct HomeDotMatrix: View {
             )
         ) { timeline in
             Canvas { context, size in
+                drawRippleGlow(in: context, at: timeline.date)
                 drawDots(
                     in: context,
                     size: size,
@@ -39,6 +40,41 @@ struct HomeDotMatrix: View {
             )
         }
         .accessibilityHidden(true)
+    }
+
+    private func drawRippleGlow(
+        in context: GraphicsContext,
+        at date: Date
+    ) {
+        guard !reduceMotion else { return }
+
+        context.drawLayer { glowContext in
+            glowContext.addFilter(.blur(radius: 6))
+
+            for ripple in ripples {
+                let elapsed = date.timeIntervalSince(ripple.startedAt)
+                guard elapsed >= 0, elapsed < 1.05 else { continue }
+
+                let progress = CGFloat(elapsed / 1.05)
+                let radius = max(progress * 300, 2)
+                let rect = CGRect(
+                    x: ripple.origin.x - radius,
+                    y: ripple.origin.y - radius,
+                    width: radius * 2,
+                    height: radius * 2
+                )
+
+                glowContext.stroke(
+                    Path(ellipseIn: rect),
+                    with: .color(
+                        Color.brandPrimary.opacity(
+                            Double(1 - progress) * 0.09
+                        )
+                    ),
+                    lineWidth: 8
+                )
+            }
+        }
     }
 
     private func drawDots(

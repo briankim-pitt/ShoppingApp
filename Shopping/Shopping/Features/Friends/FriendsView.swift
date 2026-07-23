@@ -13,16 +13,13 @@ struct FriendsView: View {
             ZStack(alignment: .top) {
                 ScrollView {
                     if searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                        BrandedActionEmptyState(
-                            imageName: "friend.symbols",
-                            title: "No Friends Yet",
-                            description: "Add friends to see what they’re shopping for—without actually buying.",
-                            actionTitle: "Add Friends",
-                            actionSystemImage: "person.badge.plus",
-                            action: showAddFriends
+                        FriendsInvitationContent(
+                            searchText: $searchText,
+                            showsFindFriendsSection: false
                         )
-                        .containerRelativeFrame(.vertical)
-                        .padding(.top, 44)
+                        .padding(.horizontal, 20)
+                        .padding(.top, 80)
+                        .padding(.bottom, 32)
                     } else {
                         ContentUnavailableView.search
                             .containerRelativeFrame(.vertical)
@@ -62,7 +59,7 @@ struct FriendsView: View {
                             .labelStyle(.iconOnly)
                     }
                     .buttonStyle(.glassProminent)
-                    .tint(Color.brandPrimary)
+                    .tint(Color.brandAction)
                     .matchedTransitionSource(
                         id: "addFriends",
                         in: addFriendsTransition

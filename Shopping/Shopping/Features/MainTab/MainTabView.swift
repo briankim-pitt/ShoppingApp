@@ -52,7 +52,7 @@ struct MainTabView: View {
                 )
             }
         }
-        .tint(Color.brandPrimary)
+        .tint(Color.brandAction)
         .sensoryFeedback(
             .impact(weight: .medium),
             trigger: appModel.selectedTab

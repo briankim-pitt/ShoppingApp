@@ -50,7 +50,7 @@ struct CartItemRow: View {
                     in: 1...99
                 )
                 .font(.subheadline)
-                .tint(Color.brandPrimary)
+                .tint(Color.brandAction)
 
                 if let lineTotal = item.lineTotal {
                     Label {
@@ -72,7 +72,7 @@ struct CartItemRow: View {
                 systemImage: "bookmark",
                 action: saveForLater
             )
-            .tint(Color.brandPrimary)
+            .tint(Color.brandAction)
         }
     }
 

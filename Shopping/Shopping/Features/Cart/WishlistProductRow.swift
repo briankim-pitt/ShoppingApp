@@ -67,7 +67,7 @@ struct WishlistProductRow: View {
                     systemImage: "cart.badge.plus",
                     action: moveToCart
                 )
-                .tint(Color.brandPrimary)
+                .tint(Color.brandAction)
                 .disabled(isWorking)
             }
         }

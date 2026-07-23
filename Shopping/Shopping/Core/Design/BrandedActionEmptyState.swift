@@ -53,7 +53,7 @@ struct BrandedActionEmptyState: View {
             )
             .buttonStyle(.glassProminent)
             .controlSize(.large)
-            .tint(Color.brandPrimary)
+            .tint(Color.brandAction)
         }
     }
 }

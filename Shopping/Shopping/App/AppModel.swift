@@ -126,6 +126,12 @@ final class AppModel {
     }
 
     func handleIncomingURL(_ url: URL) {
+        if url.scheme?.lowercased() == "shopping",
+           url.host?.lowercased() == "friends" {
+            selectedTab = .friends
+            return
+        }
+
         guard let pending = PendingProductImport(deepLink: url) else {
             return
         }

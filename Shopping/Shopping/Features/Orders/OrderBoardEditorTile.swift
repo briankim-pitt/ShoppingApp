@@ -4,10 +4,11 @@ struct OrderBoardEditorTile: View {
     let boardItem: OrderBoardItem
     @Binding var position: OrderBoardPosition
     let boardSize: CGSize
+    let interactionAction: () -> Void
     let savePositionAction: () -> Void
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @GestureState private var dragTranslation = CGSize.zero
+    @State private var dragTranslation = CGSize.zero
     @State private var isDragging = false
 
     var body: some View {
@@ -26,7 +27,6 @@ struct OrderBoardEditorTile: View {
                 y: isDragging ? 10 : 5
             )
             .position(displayPosition)
-            .zIndex(isDragging ? 1 : 0)
             .highPriorityGesture(dragGesture)
             .sensoryFeedback(.impact(weight: .medium), trigger: isDragging)
             .accessibilityLabel(boardItem.item.title)
@@ -64,12 +64,12 @@ struct OrderBoardEditorTile: View {
             minimumDistance: 0,
             coordinateSpace: .named("ordersBoard")
         )
-        .updating($dragTranslation) { value, translation, _ in
-            translation = value.translation
-        }
-        .onChanged { _ in
-            guard !isDragging else { return }
-            isDragging = true
+        .onChanged { value in
+            dragTranslation = value.translation
+            if !isDragging {
+                interactionAction()
+                isDragging = true
+            }
         }
         .onEnded(finishDrag)
     }
@@ -77,13 +77,16 @@ struct OrderBoardEditorTile: View {
     private func finishDrag(_ value: DragGesture.Value) {
         guard isDragging else { return }
 
+        let committedPosition = OrderBoardPosition(
+            x: position.x + value.translation.width / horizontalTravel,
+            y: position.y + value.translation.height / verticalTravel
+        ).clamped()
+
         var transaction = Transaction()
         transaction.disablesAnimations = true
         withTransaction(transaction) {
-            position = OrderBoardPosition(
-                x: position.x + value.translation.width / horizontalTravel,
-                y: position.y + value.translation.height / verticalTravel
-            ).clamped()
+            position = committedPosition
+            dragTranslation = .zero
         }
 
         isDragging = false

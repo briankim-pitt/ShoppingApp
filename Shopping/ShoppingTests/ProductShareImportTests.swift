@@ -53,4 +53,24 @@ struct ProductShareImportTests {
         #expect(appModel.selectedTab == .home)
         #expect(appModel.pendingProductImport == nil)
     }
+
+    @Test
+    func incomingFriendInviteSelectsFriendsTab() throws {
+        let appModel = AppModel(
+            authService: UnavailableAuthService(),
+            walletService: UnavailableWalletService(),
+            productImportService: UnavailableProductImportService(),
+            catalogService: UnavailableCatalogService(),
+            ordersService: UnavailableOrdersService(),
+            checkoutService: UnavailableCheckoutService(),
+            wishlistService: UnavailableWishlistService()
+        )
+
+        appModel.handleIncomingURL(
+            try #require(URL(string: "shopping://friends"))
+        )
+
+        #expect(appModel.selectedTab == .friends)
+        #expect(appModel.pendingProductImport == nil)
+    }
 }

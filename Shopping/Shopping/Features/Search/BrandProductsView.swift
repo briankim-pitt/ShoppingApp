@@ -30,7 +30,7 @@ struct BrandProductsView: View {
                             action: retry
                         )
                         .buttonStyle(.glassProminent)
-                        .tint(Color.brandPrimary)
+                        .tint(Color.brandAction)
                     }
                     .containerRelativeFrame(.vertical)
                 } else if viewModel.products.isEmpty {

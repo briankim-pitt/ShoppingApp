@@ -12,6 +12,8 @@ struct OrdersBoardView: View {
     let hideAction: (OrderBoardItem) -> Void
     let deleteAction: (OrderBoardItem) -> Void
 
+    @State private var stackingOrder = OrderBoardPositionStore.loadStackingOrder()
+
     var body: some View {
         GeometryReader { geometry in
             let itemBoardSize = CGSize(
@@ -28,12 +30,19 @@ struct OrdersBoardView: View {
                             boardItem: item,
                             position: positionBinding(for: item.id, index: index),
                             boardSize: itemBoardSize,
+                            interactionAction: {
+                                bringToFront(item.id)
+                            },
                             savePositionAction: savePositions
                         )
+                        .zIndex(stackingRank(for: item.id, fallback: index))
                     } else {
                         OrderBoardTile(
                             boardItem: item,
                             transitionNamespace: transitionNamespace,
+                            interactionAction: {
+                                bringToFront(item.id)
+                            },
                             selectionAction: selectionAction,
                             moveAction: moveAction,
                             hideAction: hideAction,
@@ -46,15 +55,20 @@ struct OrdersBoardView: View {
                                 in: itemBoardSize
                             )
                         )
+                        .zIndex(stackingRank(for: item.id, fallback: index))
                     }
                 }
             }
             .coordinateSpace(.named("ordersBoard"))
         }
         .frame(height: boardHeight)
-        .onAppear(perform: seedMissingPositions)
+        .onAppear {
+            seedMissingPositions()
+            seedStackingOrder()
+        }
         .onChange(of: items.map(\.id)) {
             seedMissingPositions()
+            seedStackingOrder()
         }
     }
 
@@ -96,6 +110,28 @@ struct OrdersBoardView: View {
 
     private func savePositions() {
         OrderBoardPositionStore.save(positions)
+    }
+
+    private func seedStackingOrder() {
+        var didChange = false
+        for item in items where !stackingOrder.contains(item.id) {
+            stackingOrder.append(item.id)
+            didChange = true
+        }
+
+        if didChange {
+            OrderBoardPositionStore.saveStackingOrder(stackingOrder)
+        }
+    }
+
+    private func bringToFront(_ id: UUID) {
+        stackingOrder.removeAll { $0 == id }
+        stackingOrder.append(id)
+        OrderBoardPositionStore.saveStackingOrder(stackingOrder)
+    }
+
+    private func stackingRank(for id: UUID, fallback: Int) -> Double {
+        Double(stackingOrder.firstIndex(of: id) ?? fallback)
     }
 
     private func displayPosition(

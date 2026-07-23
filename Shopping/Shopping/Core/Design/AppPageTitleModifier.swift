@@ -23,6 +23,18 @@ extension Color {
         blue: 255 / 255
     )
 
+    static let brandAction = Color(
+        uiColor: UIColor { traits in
+            traits.userInterfaceStyle == .dark ? .white : .black
+        }
+    )
+
+    static let brandActionForeground = Color(
+        uiColor: UIColor { traits in
+            traits.userInterfaceStyle == .dark ? .black : .white
+        }
+    )
+
     static let brandPurpleLight = Color(
         red: 185 / 255,
         green: 156 / 255,
